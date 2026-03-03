@@ -3,6 +3,8 @@ package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "user_role",
         uniqueConstraints = {
@@ -11,8 +13,8 @@ import jakarta.validation.constraints.NotNull;
 public class UserRole {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
