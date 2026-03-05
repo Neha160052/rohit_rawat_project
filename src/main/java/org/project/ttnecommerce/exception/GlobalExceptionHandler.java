@@ -56,4 +56,17 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", e.getMessage()));
     }
+
+    @ExceptionHandler(AccountNotActivatedException.class)
+    public ResponseEntity<?> handleAccountNotActivated(AccountNotActivatedException e) {
+        return   ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", e.getMessage()));
+    }
+    @ExceptionHandler(InvalidToken.class)
+    public ResponseEntity<?> handleInvalidToken(InvalidToken invalidToken) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", invalidToken.getMessage()));
+    }
 }
