@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.UUID;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,24 +13,21 @@ import java.util.UUID;
 @JsonIdentityInfo(
         generator = ObjectIdGenerators.PropertyGenerator.class,
         property = "id"
-)
-@Entity
+)@Entity
 @Table(name = "seller")
-public class Seller{
+public class Seller {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-
     private String gst;
-    private String company_contact;
-    private String company_name;
-
+    private String companyName;
+    private String companyContact;
+    private String companyAddress;
+    private Boolean isApproved = false;
 
     @MapsId
-    @NotNull
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JoinColumn(name = "user_id")
     private User user;
 }

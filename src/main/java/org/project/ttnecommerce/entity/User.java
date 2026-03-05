@@ -42,7 +42,7 @@ public class User {
     private Boolean isDeleted = false;
 
     @Column(nullable = false)
-    private Boolean isActive = true;
+    private Boolean isActive = false;
 
     @Column(nullable = false)
     private Boolean isExpired = false;
