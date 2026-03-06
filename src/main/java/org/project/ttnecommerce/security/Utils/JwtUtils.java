@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import org.project.ttnecommerce.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
 import java.security.Key;
 import java.util.Date;
 
@@ -14,15 +15,17 @@ import java.util.Date;
 public class JwtUtils {
 
     @Value("${security.jwt.secret-key}")
-    private String SecretKey;
+    private String secretKey;
 
-    private final long EXPIRATION_TIME = 1000 * 10;
+    // 15 minutes
+    private final long EXPIRATION_TIME = 1000 * 60 * 15;
 
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(SecretKey.getBytes());
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
     public String generateToken(CustomUserDetails userDetails) {
+
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date())
@@ -36,15 +39,22 @@ public class JwtUtils {
     }
 
     public boolean isTokenValid(String token, CustomUserDetails userDetails) {
+
         final String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+
+        return username.equals(userDetails.getUsername())
+                && !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(new Date());
+
+        Date expiration = extractAllClaims(token).getExpiration();
+
+        return expiration.before(new Date());
     }
 
     private Claims extractAllClaims(String token) {
+
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()

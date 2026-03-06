@@ -1,5 +1,6 @@
 package org.project.ttnecommerce.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.project.ttnecommerce.dto.LoginRequest;
 import org.project.ttnecommerce.dto.LoginResponse;
@@ -43,5 +44,18 @@ public class AuthController {
         refreshTokenService.verifyExpiration(token);
         String newAccessToken = jwtUtils.generateToken(new CustomUserDetails(token.getUser()));
         return ResponseEntity.ok(new LoginResponse(newAccessToken, token.getToken()));
+    }
+
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization token missing");
+        }
+
+        String accessToken = authHeader.substring(7);
+        authService.logout(accessToken);
+        return ResponseEntity.ok("Logout successful");
     }
 }

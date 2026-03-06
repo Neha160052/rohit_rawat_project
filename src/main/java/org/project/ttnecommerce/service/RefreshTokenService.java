@@ -20,15 +20,15 @@ public class RefreshTokenService {
     @Transactional
     public RefreshToken createToken(User user) {
 
-        RefreshToken refreshToken =
-                refreshTokenRepository.findByUserId(user.getId())
-                        .orElse(new RefreshToken());
+        refreshTokenRepository.findByUserId(user.getId())
+                .ifPresent(refreshTokenRepository::delete);
 
-        refreshToken.setUser(user);
-        refreshToken.setToken(UUID.randomUUID().toString());
-        refreshToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+        RefreshToken token = new RefreshToken();
+        token.setUser(user);
+        token.setToken(UUID.randomUUID().toString());
+        token.setExpiryDate(LocalDateTime.now().plusHours(24));
 
-        return refreshTokenRepository.save(refreshToken);
+        return refreshTokenRepository.save(token);
     }
 
     public RefreshToken verifyExpiration(RefreshToken token) {

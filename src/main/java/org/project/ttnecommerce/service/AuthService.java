@@ -6,6 +6,8 @@ import org.project.ttnecommerce.dto.LoginResponse;
 import org.project.ttnecommerce.entity.User;
 import org.project.ttnecommerce.exception.AccountLockedException;
 import org.project.ttnecommerce.exception.InvalidCredentialsException;
+import org.project.ttnecommerce.exception.UserNotFoundException;
+import org.project.ttnecommerce.repository.RefreshTokenRepository;
 import org.project.ttnecommerce.repository.UserRepository;
 import org.project.ttnecommerce.security.CustomUserDetails;
 import org.project.ttnecommerce.security.Utils.JwtUtils;
@@ -25,39 +27,38 @@ public class AuthService {
     private final LoginAttemptService loginAttemptService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public LoginResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         if (user.getIsLocked()) {
             throw new AccountLockedException("Account locked due to multiple failed attempts");
         }
 
         try {
-
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                             request.getEmail(),
                             request.getPassword()
-                    )
-            );
+                    ));
 
-            CustomUserDetails userDetails =
-                    (CustomUserDetails) authentication.getPrincipal();
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-            // reset invalid attempt count
             loginAttemptService.loginSucceeded(user);
-
             String token = jwtUtils.generateToken(userDetails);
-
             return new LoginResponse(token, "Bearer");
 
         } catch (BadCredentialsException ex) {
             loginAttemptService.loginFailed(user);
-
             throw new InvalidCredentialsException("Invalid credentials");
         }
+    }
+
+    public void logout(String accessToken) {
+        String email = jwtUtils.extractUsername(accessToken);
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found"));
+        refreshTokenRepository.deleteByUser(user);
     }
 }
