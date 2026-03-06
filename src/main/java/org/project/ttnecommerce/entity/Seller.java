@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.UUID;
+@Entity
+@Table(name = "seller")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,8 +15,7 @@ import java.util.UUID;
 @JsonIdentityInfo(
         generator = ObjectIdGenerators.PropertyGenerator.class,
         property = "id"
-)@Entity
-@Table(name = "seller")
+)
 public class Seller {
 
     @Id
@@ -23,7 +24,6 @@ public class Seller {
     private String gst;
     private String companyName;
     private String companyContact;
-    private String companyAddress;
     private Boolean isApproved = false;
 
     @MapsId

@@ -1,9 +1,11 @@
 package org.project.ttnecommerce.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.project.ttnecommerce.dto.AddressRequest;
 import org.project.ttnecommerce.dto.RegisterSellerRequest;
 import org.project.ttnecommerce.entity.*;
 import org.project.ttnecommerce.exception.*;
+import org.project.ttnecommerce.repository.AddressRepository;
 import org.project.ttnecommerce.repository.RoleRepository;
 import org.project.ttnecommerce.repository.SellerRepository;
 import org.project.ttnecommerce.repository.UserRepository;
@@ -16,12 +18,12 @@ public class SellerService {
 
     private final UserRepository userRepository;
     private final SellerRepository sellerRepository;
+    private final AddressRepository addressRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public void registerSeller(RegisterSellerRequest request) {
-
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new PasswordMismatchException("Passwords do not match");
         }
@@ -38,12 +40,9 @@ public class SellerService {
             throw new CompanyAlreadyExistsException("Company name already exists");
         }
 
-        Role sellerRole = roleRepository
-                .findByAuthority("SELLER")
-                .orElseThrow(() -> new RuntimeException("Seller role not found"));
+        Role sellerRole = roleRepository.findByAuthority("SELLER").orElseThrow(() -> new RuntimeException("Seller role not found"));
 
         User user = new User();
-
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFirstName(request.getFirstName());
@@ -67,10 +66,22 @@ public class SellerService {
         seller.setUser(user);
         seller.setGst(request.getGst());
         seller.setCompanyName(request.getCompanyName());
-        seller.setCompanyAddress(request.getCompanyAddress());
         seller.setCompanyContact(request.getCompanyContact());
         seller.setIsApproved(false);
 
         sellerRepository.save(seller);
+
+        AddressRequest addressRequest = request.getAddress();
+
+        Address address = new Address();
+        address.setAddressLine(addressRequest.getAddressLine());
+        address.setCity(addressRequest.getCity());
+        address.setState(addressRequest.getState());
+        address.setCountry(addressRequest.getCountry());
+        address.setZipCode(addressRequest.getZipCode());
+        address.setLabel("Company");
+        address.setUser(user);
+
+        addressRepository.save(address);
     }
 }

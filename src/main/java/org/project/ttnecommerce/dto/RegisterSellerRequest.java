@@ -25,9 +25,6 @@ public class RegisterSellerRequest {
     private String companyName;
 
     @NotBlank
-    private String companyAddress;
-
-    @NotBlank
     @Pattern(regexp = "^[0-9]{10}$", message = "Phone must be 10 digits")
     private String companyContact;
 
@@ -36,5 +33,7 @@ public class RegisterSellerRequest {
 
     @NotBlank
     private String lastName;
+
+    private AddressRequest address;
 
 }
