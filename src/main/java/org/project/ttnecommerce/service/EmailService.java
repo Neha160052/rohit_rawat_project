@@ -60,4 +60,16 @@ public class EmailService {
 
         mailSender.send(message);
     }
+
+    @Async
+    public void sendAccountLockedEmail(String email) {
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject("Account Locked");
+        message.setText(
+                "Your account has been locked due to multiple failed login attempts."
+        );
+        mailSender.send(message);
+    }
 }
