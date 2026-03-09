@@ -3,16 +3,15 @@ import org.project.ttnecommerce.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.util.Collection;
 import java.util.stream.Collectors;
 
 public class CustomUserDetails implements UserDetails {
 
-    private User user;
+    private final User user;
 
     public CustomUserDetails(User user) {
-        this.user= user;
+        this.user = user;
     }
 
     public User getUser(){
@@ -21,9 +20,15 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return user.getUserRoles().stream().map(userRole -> new SimpleGrantedAuthority(
-                userRole.getRole().getAuthority()
-        )).collect(Collectors.toSet());
+
+        return user.getUserRoles()
+                .stream()
+                .map(userRole ->
+                        new SimpleGrantedAuthority(
+                                "ROLE_" + userRole.getRole().getAuthority()
+                        )
+                )
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -47,7 +52,7 @@ public class CustomUserDetails implements UserDetails {
     }
 
     @Override
-    public boolean isCredentialsNonExpired(){
+    public boolean isCredentialsNonExpired() {
         return true;
     }
 
@@ -55,7 +60,4 @@ public class CustomUserDetails implements UserDetails {
     public boolean isEnabled() {
         return user.getIsActive();
     }
-
-
 }
-

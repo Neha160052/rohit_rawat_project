@@ -1,5 +1,4 @@
 package org.project.ttnecommerce.security;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -76,7 +75,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        return path.startsWith("/auth/login") ||
+        return path.startsWith("/auth/customer/login") ||
+                path.startsWith("/auth/seller/login") ||
+                path.startsWith("/auth/admin/login") ||
                 path.startsWith("/auth/refresh") ||
                 path.startsWith("/api/customers/register") ||
                 path.startsWith("/api/customers/activate-customer") ||

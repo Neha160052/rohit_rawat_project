@@ -1,3 +1,4 @@
+/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,4 +23,4 @@ public class OrderStatus {
     @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
-}
+}*/

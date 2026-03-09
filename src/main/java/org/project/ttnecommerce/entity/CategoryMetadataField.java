@@ -1,3 +1,4 @@
+/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,4 +22,4 @@ public class CategoryMetadataField {
 
     @OneToMany(mappedBy = "field", cascade = CascadeType.ALL)
     private Set<CategoryMetadataFieldValues> values = new HashSet<>();
-}
+}*/

@@ -1,3 +1,4 @@
+/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,4 +38,4 @@ public class Product {
 
     @OneToMany(mappedBy = "product")
     private Set<ProductReview> reviews = new HashSet<>();
-}
+}*/

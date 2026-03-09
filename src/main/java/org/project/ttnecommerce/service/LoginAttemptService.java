@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.project.ttnecommerce.entity.User;
 import org.project.ttnecommerce.repository.UserRepository;
 import org.springframework.stereotype.Service;
+
 @Service
 @RequiredArgsConstructor
 public class LoginAttemptService {
@@ -13,13 +14,13 @@ public class LoginAttemptService {
 
     private static final int MAX_ATTEMPTS = 3;
 
-    public void loginFailed(User user) {
+    public void loginFailed(User user){
 
         int attempts = user.getInvalidAttemptCount() + 1;
+
         user.setInvalidAttemptCount(attempts);
 
-        if (attempts >= MAX_ATTEMPTS) {
-
+        if(attempts >= MAX_ATTEMPTS){
             user.setIsLocked(true);
             emailService.sendAccountLockedEmail(user.getEmail());
         }
@@ -27,8 +28,10 @@ public class LoginAttemptService {
         userRepository.save(user);
     }
 
-    public void loginSucceeded(User user) {
+    public void loginSucceeded(User user){
+
         user.setInvalidAttemptCount(0);
+
         userRepository.save(user);
     }
 }

@@ -43,23 +43,31 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // AUTH APIs
-                        .requestMatchers("/auth/login").permitAll()
+                        // AUTH ENDPOINTS
+                        .requestMatchers("/auth/customer/login").permitAll()
+                        .requestMatchers("/auth/seller/login").permitAll()
+                        .requestMatchers("/auth/admin/login").permitAll()
+                        .requestMatchers("/auth/logout").permitAll()
                         .requestMatchers("/auth/refresh").permitAll()
 
-                        // CUSTOMER APIs
+                        // CUSTOMER PUBLIC APIS
                         .requestMatchers("/api/customers/register").permitAll()
                         .requestMatchers("/api/customers/activate-customer").permitAll()
                         .requestMatchers("/api/customers/resend-activation-link").permitAll()
 
-                        // PASSWORD RESET APIs
+                        // PASSWORD RESET
                         .requestMatchers("/api/forgot-password").permitAll()
                         .requestMatchers("/api/reset-password").permitAll()
 
                         // SELLER REGISTER
                         .requestMatchers("/api/sellers/register").permitAll()
 
-                        // ANY OTHER API
+                        // ROLE BASED ACCESS
+                        .requestMatchers("/api/customers/**").hasRole("CUSTOMER")
+                        .requestMatchers("/api/sellers/**").hasRole("SELLER")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // ANY OTHER REQUEST
                         .anyRequest().authenticated()
                 )
 

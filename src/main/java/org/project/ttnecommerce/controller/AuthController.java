@@ -25,37 +25,50 @@ public class AuthController {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        LoginResponse response = authService.login(request);
-        return ResponseEntity.ok(response);
+    @PostMapping("/customer/login")
+    public ResponseEntity<LoginResponse> customerLogin(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request,"CUSTOMER"));
     }
 
+    @PostMapping("/seller/login")
+    public ResponseEntity<LoginResponse> sellerLogin(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request,"SELLER"));
+    }
 
-    @GetMapping("/test")
-    public String test() {
-        return "test";
+    @PostMapping("/admin/login")
+    public ResponseEntity<LoginResponse> adminLogin(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request,"ADMIN"));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponse> refreshToken(@RequestBody RefreshRequest request) {
 
-        RefreshToken token = refreshTokenRepository.findByToken(request.getRefreshToken()).orElseThrow(() -> new InvalidToken("Invalid refresh token"));
-        refreshTokenService.verifyExpiration(token);
-        String newAccessToken = jwtUtils.generateToken(new CustomUserDetails(token.getUser()));
-        return ResponseEntity.ok(new LoginResponse(newAccessToken, token.getToken()));
-    }
+        RefreshToken token = refreshTokenRepository
+                .findByToken(request.getRefreshToken())
+                .orElseThrow(() -> new InvalidToken("Invalid refresh token"));
 
+        refreshTokenService.verifyExpiration(token);
+
+        String accessToken =
+                jwtUtils.generateToken(new CustomUserDetails(token.getUser()));
+
+        return ResponseEntity.ok(
+                new LoginResponse(accessToken, token.getToken())
+        );
+    }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Authorization token missing");
-        }
 
-        String accessToken = authHeader.substring(7);
-        authService.logout(accessToken);
+        String authHeader = request.getHeader("Authorization");
+
+        if(authHeader == null || !authHeader.startsWith("Bearer "))
+            throw new RuntimeException("Authorization header missing");
+
+        String token = authHeader.substring(7);
+
+        authService.logout(token);
+
         return ResponseEntity.ok("Logout successful");
     }
 }

@@ -1,3 +1,4 @@
+/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,4 +30,4 @@ public class CategoryMetadataFieldValues {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
-}
+}*/

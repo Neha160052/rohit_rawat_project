@@ -1,3 +1,4 @@
+/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,4 +25,4 @@ public class Order {
     private BigDecimal amountPaid;
     private String paymentMethod;
     private LocalDateTime dateCreated;
-}
+}*/

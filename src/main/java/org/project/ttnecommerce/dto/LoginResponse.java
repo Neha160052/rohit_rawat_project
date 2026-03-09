@@ -1,5 +1,4 @@
 package org.project.ttnecommerce.dto;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

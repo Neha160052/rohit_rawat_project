@@ -1,3 +1,4 @@
+/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -32,4 +33,4 @@ public class ProductVariation {
 
     @OneToMany(mappedBy = "productVariation")
     private Set<Cart> carts = new HashSet<>();
-}
+}*/

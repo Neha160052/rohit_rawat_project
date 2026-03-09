@@ -1,3 +1,4 @@
+/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,3 +25,4 @@ public class Cart {
     @JoinColumn(name = "product_variation_id")
     private ProductVariation productVariation;
 }
+*/

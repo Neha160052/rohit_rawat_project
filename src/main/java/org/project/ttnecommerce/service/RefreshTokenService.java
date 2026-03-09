@@ -18,12 +18,13 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Transactional
-    public RefreshToken createToken(User user) {
+    public RefreshToken createRefreshToken(User user){
 
         refreshTokenRepository.findByUserId(user.getId())
                 .ifPresent(refreshTokenRepository::delete);
 
         RefreshToken token = new RefreshToken();
+
         token.setUser(user);
         token.setToken(UUID.randomUUID().toString());
         token.setExpiryDate(LocalDateTime.now().plusHours(24));
@@ -31,13 +32,13 @@ public class RefreshTokenService {
         return refreshTokenRepository.save(token);
     }
 
-    public RefreshToken verifyExpiration(RefreshToken token) {
+    public RefreshToken verifyExpiration(RefreshToken token){
 
-        if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
+        if(token.getExpiryDate().isBefore(LocalDateTime.now())){
 
             refreshTokenRepository.delete(token);
 
-            throw  new TokenRefreshException("Refresh token expired. Please login again.");
+            throw new TokenRefreshException("Refresh token expired");
         }
 
         return token;

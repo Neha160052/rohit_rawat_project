@@ -1,3 +1,4 @@
+/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
@@ -27,4 +28,4 @@ public class CartId implements Serializable {
     public int hashCode() {
         return Objects.hash(customerUserId, productVariationId);
     }
-}
+}*/
