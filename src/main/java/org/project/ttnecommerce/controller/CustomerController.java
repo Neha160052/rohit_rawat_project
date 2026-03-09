@@ -30,7 +30,6 @@ public class CustomerController {
         );
     }
 
-
     @PostMapping("/resend-activation-link")
     public ResponseEntity<ApiResponse> resendActivationLink(@Valid @RequestBody ResendActivationRequest request) {
         customerService.resendActivationLink(request.getEmail());

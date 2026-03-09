@@ -1,5 +1,6 @@
 package org.project.ttnecommerce.service;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.project.ttnecommerce.dto.LoginRequest;
@@ -13,13 +14,13 @@ import org.project.ttnecommerce.repository.RefreshTokenRepository;
 import org.project.ttnecommerce.repository.UserRepository;
 import org.project.ttnecommerce.security.CustomUserDetails;
 import org.project.ttnecommerce.security.Utils.JwtUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-
-import java.beans.Transient;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +33,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
 
-    public LoginResponse login(LoginRequest request,String role) {
+    public LoginResponse login(LoginRequest request, String role, HttpServletResponse response) {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -54,46 +55,40 @@ public class AuthService {
                 .anyMatch(r -> r.getRole().getAuthority().equals(role));
 
         if(!hasRole)
-            throw new RuntimeException("Invalid login endpoint for user role");
+            throw new RuntimeException("Invalid login endpoint for the role");
 
         try{
-
-            Authentication authentication =
-                    authenticationManager.authenticate(
-                            new UsernamePasswordAuthenticationToken(
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                                     request.getEmail(),
                                     request.getPassword()
                             )
                     );
 
-            CustomUserDetails userDetails =
-                    (CustomUserDetails) authentication.getPrincipal();
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
             loginAttemptService.loginSucceeded(user);
-
             String accessToken = jwtUtils.generateToken(userDetails);
-
-            RefreshToken refreshToken =
-                    refreshTokenService.createRefreshToken(user);
-
-            return new LoginResponse(accessToken,refreshToken.getToken());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken.getToken())
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(24 * 60 * 60)
+                    .sameSite("Strict")
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+            return new LoginResponse(accessToken);
 
         }catch(BadCredentialsException e){
-
             loginAttemptService.loginFailed(user);
-
             throw new InvalidCredentialsException("Invalid credentials");
         }
     }
 
     @Transactional
-    public void logout(String accessToken){
-
-        String email = jwtUtils.extractUsername(accessToken);
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-        refreshTokenRepository.deleteByUser(user);
+    public void logout(String refreshToken) {
+        RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new RuntimeException("Refresh Token not found"));
+        refreshTokenRepository.delete(token);
     }
 }
