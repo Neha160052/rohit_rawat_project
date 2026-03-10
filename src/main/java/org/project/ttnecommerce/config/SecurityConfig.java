@@ -37,17 +37,10 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/customer/login").permitAll()
-                        .requestMatchers("/auth/seller/login").permitAll()
-                        .requestMatchers("/auth/admin/login").permitAll()
-                        .requestMatchers("/auth/logout").permitAll()
-                        .requestMatchers("/auth/refresh").permitAll()
-                        .requestMatchers("/api/customers/register").permitAll()
-                        .requestMatchers("/api/customers/activate-customer").permitAll()
-                        .requestMatchers("/api/customers/resend-activation-link").permitAll()
-                        .requestMatchers("/api/forgot-password").permitAll()
-                        .requestMatchers("/api/reset-password").permitAll()
-                        .requestMatchers("/api/sellers/register").permitAll()
+                        .requestMatchers("/auth/customer/login","/auth/seller/login","/auth/admin/login",
+                                "/auth/logout","/auth/refresh","/api/customers/register","/api/customers/activate-customer",
+                                "/api/customers/resend-activation-link","/api/forgot-password","/api/reset-password",
+                                "/api/sellers/register").permitAll()
                         .requestMatchers("/api/customers/**").hasRole("CUSTOMER")
                         .requestMatchers("/api/sellers/**").hasRole("SELLER")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
