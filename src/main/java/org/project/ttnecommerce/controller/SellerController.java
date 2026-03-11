@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.project.ttnecommerce.dto.ApiResponse;
 import org.project.ttnecommerce.dto.RegisterSellerRequest;
 import org.project.ttnecommerce.dto.SellerProfileResponse;
+import org.project.ttnecommerce.dto.SellerProfileUpdateRequest;
 import org.project.ttnecommerce.service.SellerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,19 @@ public class SellerController {
     }
 
 
+    @GetMapping("/profile")
+    public ResponseEntity<SellerProfileResponse> getSellerProfile() {
+        SellerProfileResponse response = sellerService.getSellerProfile();
+        return ResponseEntity.ok(response);
+    }
 
+
+    @PatchMapping("/update-profile")
+    public ResponseEntity<String> updateSellerProfile(
+            @RequestBody SellerProfileUpdateRequest request) {
+        sellerService.updateSellerProfile(request);
+        return ResponseEntity.ok("Profile updated successfully");
+    }
 
 
     @PostMapping("/profile/image")
