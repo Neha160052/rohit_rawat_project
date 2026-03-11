@@ -48,7 +48,7 @@ public class SellerService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
 
-        user.setIsActive(true);
+        user.setIsActive(false);
         user.setIsDeleted(false);
         user.setIsLocked(false);
         user.setIsExpired(false);

@@ -64,8 +64,21 @@ public class EmailService {
     @Async
     public void sendCustomerDeactivationEmailByAdmin(User user) {
         String subject = "Account Deactivated";
-        String message = "Hello " + user.getFirstName() + ",\n\n" +
-                        "Your account has been deactivated by the administrator.";
+        String message = "Hello " + user.getFirstName() + ",\n\n" + "Your account has been deactivated by the Admin.";
+        sendEmail(user.getEmail(), subject, message);
+    }
+
+    @Async
+    public void sendSellerActivationEmailByAdmin(User user) {
+        String subject = "Account Activated";
+        String message = "Hello " + user.getFirstName() + ",\n\n" + "Your seller account has been activated by the admin.\n\n";
+        sendEmail(user.getEmail(), subject, message);
+    }
+
+    @Async
+    public void sendSellerDeactivationEmailByAdmin(User user) {
+        String subject = "Account Deactivated";
+        String message = "Hello " + user.getFirstName() + ",\n\n" + "Your seller account has been deactivated by the Admin.";
         sendEmail(user.getEmail(), subject, message);
     }
 }
