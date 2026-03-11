@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,44 +26,53 @@ public class SellerService {
     private final AddressRepository addressRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     private static final String BASE_PATH = "uploads/users/";
 
-    //register seller method
     @Transactional
     public void registerSeller(RegisterSellerRequest request) {
-
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new PasswordMismatchException("Passwords do not match");
         }
-
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already exists");
-        }
-
         if (sellerRepository.existsByGst(request.getGst())) {
             throw new GstAlreadyExistsException("GST already registered");
         }
-
         if (sellerRepository.existsByCompanyNameIgnoreCase(request.getCompanyName())) {
             throw new CompanyAlreadyExistsException("Company name already exists");
         }
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (user == null) {
+            user = new User();
+            user.setEmail(request.getEmail());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setFirstName(request.getFirstName());
+            user.setLastName(request.getLastName());
+            user.setIsActive(false);
+            user.setIsDeleted(false);
+            user.setIsLocked(false);
+            user.setIsExpired(false);
+        }
+        else {
+            if (user.getSeller() != null) {
+                throw new InvalidRequestException("User already registered as seller");
+            }
+        }
 
-        Role sellerRole = roleRepository.findByAuthority("SELLER").orElseThrow(() -> new RuntimeException("Seller role not found"));
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
+        Role sellerRole = roleRepository
+                .findByAuthority("ROLE_SELLER")
+                .orElseThrow(() -> new RuntimeException("Seller role not found"));
 
-        user.setIsActive(false);
-        user.setIsDeleted(false);
-        user.setIsLocked(false);
-        user.setIsExpired(false);
-        UserRole userRole = new UserRole();
-        userRole.setUser(user);
-        userRole.setRole(sellerRole);
-        user.getUserRoles().add(userRole);
+        boolean hasRole = user.getUserRoles()
+                .stream()
+                .anyMatch(ur -> ur.getRole().getAuthority().equals("ROLE_SELLER"));
+
+        if (!hasRole) {
+            UserRole userRole = new UserRole();
+            userRole.setUser(user);
+            userRole.setRole(sellerRole);
+            user.getUserRoles().add(userRole);
+        }
         userRepository.save(user);
         Seller seller = new Seller();
         seller.setUser(user);
@@ -71,26 +81,26 @@ public class SellerService {
         seller.setCompanyContact(request.getCompanyContact());
         seller.setIsApproved(false);
         sellerRepository.save(seller);
-        AddressRequest addressRequest = request.getAddress();
-        Address address = new Address();
-        address.setAddressLine(addressRequest.getAddressLine());
-        address.setCity(addressRequest.getCity());
-        address.setState(addressRequest.getState());
-        address.setCountry(addressRequest.getCountry());
-        address.setZipCode(addressRequest.getZipCode());
-        address.setLabel("Company");
-        address.setUser(user);
-
-        addressRepository.save(address);
+        AddressRequest addr = request.getAddress();
+        if (addr != null) {
+            Address address = new Address();
+            address.setAddressLine(addr.getAddressLine());
+            address.setCity(addr.getCity());
+            address.setState(addr.getState());
+            address.setCountry(addr.getCountry());
+            address.setZipCode(addr.getZipCode());
+            address.setLabel("COMPANY");
+            address.setUser(user);
+            addressRepository.save(address);
+        }
     }
 
     // get profile method
-
     public SellerProfileResponse getSellerProfile() {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-                        .getPrincipal();
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
 
         String email = userDetails.getUsername();
         User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -107,16 +117,30 @@ public class SellerService {
         AddressResponse addressResponse = null;
         if (address != null) {
             addressResponse = AddressResponse.builder()
+                    .addressId(address.getId())
+                    .addressLine(address.getAddressLine())
                     .city(address.getCity())
                     .state(address.getState())
                     .country(address.getCountry())
-                    .addressLine(address.getAddressLine())
                     .zipCode(address.getZipCode())
                     .build();
         }
-        String imagePath = "/uploads/users/" + user.getId();
+        Path jpg = Paths.get(BASE_PATH + user.getId() + ".jpg");
+        Path jpeg = Paths.get(BASE_PATH + user.getId() + ".jpeg");
+        Path png = Paths.get(BASE_PATH + user.getId() + ".png");
+        Path bmp = Paths.get(BASE_PATH + user.getId() + ".bmp");
+        String imagePath = null;
+        if (Files.exists(jpg)) {
+            imagePath = "/uploads/users/" + user.getId() + ".jpg";
+        }
+        else if (Files.exists(jpeg)) {
+            imagePath = "/uploads/users/" + user.getId() + ".jpeg";
+        }
+        else if (Files.exists(png)) {
+            imagePath = "/uploads/users/" + user.getId() + ".png";
+        }
         return SellerProfileResponse.builder()
-                .id(user.getId())
+                .userId(user.getId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .isActive(user.getIsActive())
@@ -190,6 +214,86 @@ public class SellerService {
             }
         }
         userRepository.save(user);
+    }
+
+    // update seller password method
+    @Transactional
+    public void updateSellerPassword(UpdateSellerPasswordRequest request) {
+
+        CustomUserDetails userDetails =
+                (CustomUserDetails) SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+                        .getPrincipal();
+
+        String email = userDetails.getUsername();
+
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (user.getSeller() == null) {
+            throw new InvalidRequestException("User is not a seller");
+        }
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new InvalidRequestException("Current password is incorrect");
+        }
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new InvalidRequestException("New password and confirm password must match");
+        }
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new InvalidRequestException("New password cannot be same as old password");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        emailService.sendPasswordChangeEmail(user);
+    }
+
+
+    // update seller address method
+    @Transactional
+    public void updateAddress(UUID addressId, UpdateAddressRequest request) {
+
+        CustomUserDetails userDetails =
+                (CustomUserDetails) SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+                        .getPrincipal();
+
+        String email = userDetails.getUsername();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (Boolean.TRUE.equals(user.getIsDeleted()))
+            throw new InvalidRequestException("User account is deleted");
+
+        if (!Boolean.TRUE.equals(user.getIsActive()))
+            throw new InvalidRequestException("User account is not active");
+
+        if (user.getSeller() == null)
+            throw new InvalidRequestException("User is not a seller");
+
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new InvalidRequestException("Address not found"));
+
+        if (!address.getUser().getId().equals(user.getId()))
+            throw new InvalidRequestException("Address does not belong to this seller");
+
+        if (request.getAddressLine() != null)
+            address.setAddressLine(request.getAddressLine());
+
+        if (request.getCity() != null)
+            address.setCity(request.getCity());
+
+        if (request.getState() != null)
+            address.setState(request.getState());
+
+        if (request.getCountry() != null)
+            address.setCountry(request.getCountry());
+
+        if (request.getZipCode() != null)
+            address.setZipCode(request.getZipCode());
+
+        addressRepository.save(address);
     }
 
     //upload image method

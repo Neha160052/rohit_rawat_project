@@ -48,7 +48,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
-
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
@@ -62,6 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.startsWith("/api/customers/resend-activation-link") ||
                 path.startsWith("/api/forgot-password") ||
                 path.startsWith("/api/reset-password") ||
-                path.startsWith("/api/sellers/register");
+                path.startsWith("/api/sellers/register") ||
+                path.startsWith("/error");
     }
 }

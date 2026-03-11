@@ -81,4 +81,13 @@ public class EmailService {
         String message = "Hello " + user.getFirstName() + ",\n\n" + "Your seller account has been deactivated by the Admin.";
         sendEmail(user.getEmail(), subject, message);
     }
+
+    @Async
+    public void sendPasswordChangeEmail(User user) {
+
+        String subject = "Password Updated Successfully";
+        String body = "Hello " + user.getFirstName() +
+                ", your password has been changed successfully.";
+        sendEmail(user.getEmail(), subject, body);
+    }
 }

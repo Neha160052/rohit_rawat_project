@@ -39,7 +39,7 @@ public class CustomerService {
         }
 
         Role customerRole = roleRepository
-                .findByAuthority("Customer")
+                .findByAuthority("ROLE_CUSTOMER")
                 .orElseThrow(() -> new RuntimeException("Customer role not found"));
 
         User user = new User();

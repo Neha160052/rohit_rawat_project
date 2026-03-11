@@ -16,15 +16,20 @@ public class AdminBootstrap implements CommandLineRunner {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+
     @Override
     public void run(String... args) {
+
         String adminEmail = "admin@gmail.com";
+
         if (userRepository.existsByEmail(adminEmail)) {
             return;
         }
-        Role adminRole = roleRepository.findByAuthority("ADMIN").orElseGet(() -> {
+
+        Role adminRole = roleRepository.findByAuthority("ROLE_ADMIN")
+                .orElseGet(() -> {
                     Role role = new Role();
-                    role.setAuthority("ADMIN");
+                    role.setAuthority("ROLE_ADMIN");
                     return roleRepository.save(role);
                 });
 
@@ -41,8 +46,11 @@ public class AdminBootstrap implements CommandLineRunner {
         UserRole userRole = new UserRole();
         userRole.setUser(admin);
         userRole.setRole(adminRole);
+
         admin.getUserRoles().add(userRole);
+
         userRepository.save(admin);
-        System.out.println("Admin account has been created");
+
+        System.out.println("Admin account has been created successfully");
     }
 }

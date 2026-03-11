@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DataInitilizer {
+public class DataInitializer {
 
     @Autowired
     private RoleRepository roleRepository;
@@ -15,16 +15,17 @@ public class DataInitilizer {
     @PostConstruct
     public void initRoles() {
 
-        if (roleRepository.findByAuthority("CUSTOMER").isEmpty()) {
-            Role customer = new Role();
-            customer.setAuthority("CUSTOMER");
-            roleRepository.save(customer);
-        }
+        createRole("ROLE_ADMIN");
+        createRole("ROLE_CUSTOMER");
+        createRole("ROLE_SELLER");
+    }
 
-        if (roleRepository.findByAuthority("SELLER").isEmpty()) {
-            Role seller = new Role();
-            seller.setAuthority("SELLER");
-            roleRepository.save(seller);
+    private void createRole(String roleName) {
+
+        if (roleRepository.findByAuthority(roleName).isEmpty()) {
+            Role role = new Role();
+            role.setAuthority(roleName);
+            roleRepository.save(role);
         }
     }
 }

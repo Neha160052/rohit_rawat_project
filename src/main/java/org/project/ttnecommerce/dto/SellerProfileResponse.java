@@ -8,7 +8,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class SellerProfileResponse {
-    private UUID id;
+    private UUID userId;
     private String firstName;
     private String lastName;
     private Boolean isActive;
@@ -16,5 +16,6 @@ public class SellerProfileResponse {
     private String companyContact;
     private String gst;
     private String image;
+
     private AddressResponse address;
 }

@@ -38,37 +38,52 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        if(user.getIsDeleted())
+        if (user.getIsDeleted()) {
             throw new RuntimeException("User deleted");
+        }
 
-        if(!user.getIsActive())
+        if (!user.getIsActive()) {
             throw new RuntimeException("Account not activated");
+        }
 
-        if(user.getIsLocked())
+        if (user.getIsLocked()) {
             throw new AccountLockedException("Account locked");
+        }
 
-        if(user.getIsExpired())
+        if (user.getIsExpired()) {
             throw new RuntimeException("Account expired");
+        }
+
+        // ROLE VALIDATION
+        String requiredRole = "ROLE_" + role;
 
         boolean hasRole = user.getUserRoles()
                 .stream()
-                .anyMatch(r -> r.getRole().getAuthority().equals(role));
+                .anyMatch(r -> r.getRole().getAuthority().equals(requiredRole));
 
-        if(!hasRole)
+        if (!hasRole) {
             throw new RuntimeException("Invalid login endpoint for the role");
+        }
 
-        try{
-            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                                    request.getEmail(),
-                                    request.getPassword()
-                            )
-                    );
+        try {
+
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
 
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
             loginAttemptService.loginSucceeded(user);
+
+            // GENERATE ACCESS TOKEN
             String accessToken = jwtUtils.generateToken(userDetails);
+
+            // CREATE REFRESH TOKEN
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
             ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken.getToken())
                     .httpOnly(true)
                     .secure(false)
@@ -76,10 +91,13 @@ public class AuthService {
                     .maxAge(24 * 60 * 60)
                     .sameSite("Strict")
                     .build();
+
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
             return new LoginResponse(accessToken);
 
-        }catch(BadCredentialsException e){
+        } catch (BadCredentialsException e) {
+
             loginAttemptService.loginFailed(user);
             throw new InvalidCredentialsException("Invalid credentials");
         }
@@ -87,8 +105,10 @@ public class AuthService {
 
     @Transactional
     public void logout(String refreshToken) {
+
         RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new RuntimeException("Refresh Token not found"));
+
         refreshTokenRepository.delete(token);
     }
 }

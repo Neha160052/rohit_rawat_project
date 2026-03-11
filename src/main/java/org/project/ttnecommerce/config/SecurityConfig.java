@@ -42,26 +42,23 @@ public class SecurityConfig {
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/auth/customer/login",
-                                "/auth/seller/login",
-                                "/auth/admin/login",
-                                "/auth/logout",
-                                "/auth/refresh",
-                                "/api/customers/register",
-                                "/api/customers/activate-customer",
-                                "/api/customers/resend-activation-link",
-                                "/api/forgot-password",
-                                "/api/reset-password",
-                                "/api/sellers/register"
-                        ).permitAll()
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(
+                            "/auth/**",
+                            "/api/customers/register",
+                            "/api/sellers/register",
+                            "/api/customers/activate-customer",
+                            "/api/customers/resend-activation-link",
+                            "/api/forgot-password",
+                            "/api/reset-password",
+                            "/error"
+                    ).permitAll()
+                    .requestMatchers("/api/customers/**").hasRole("CUSTOMER")
+                    .requestMatchers("/api/sellers/**").hasRole("SELLER")
+                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        .requestMatchers("/api/customers/**").hasRole("CUSTOMER")
-                        .requestMatchers("/api/sellers/**").hasRole("SELLER")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
+                    .anyRequest().authenticated()
+            )
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
         return http.build();
