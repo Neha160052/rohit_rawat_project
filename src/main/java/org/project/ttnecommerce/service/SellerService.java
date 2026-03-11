@@ -2,15 +2,26 @@ package org.project.ttnecommerce.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.project.ttnecommerce.dto.AddressRequest;
+import org.project.ttnecommerce.dto.AddressResponse;
 import org.project.ttnecommerce.dto.RegisterSellerRequest;
+import org.project.ttnecommerce.dto.SellerProfileResponse;
 import org.project.ttnecommerce.entity.*;
 import org.project.ttnecommerce.exception.*;
 import org.project.ttnecommerce.repository.AddressRepository;
 import org.project.ttnecommerce.repository.RoleRepository;
 import org.project.ttnecommerce.repository.SellerRepository;
 import org.project.ttnecommerce.repository.UserRepository;
+import org.project.ttnecommerce.security.CustomUserDetails;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +32,8 @@ public class SellerService {
     private final AddressRepository addressRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private static final String BASE_PATH = "uploads/users/";
 
     @Transactional
     public void registerSeller(RegisterSellerRequest request) {
@@ -84,4 +97,40 @@ public class SellerService {
 
         addressRepository.save(address);
     }
+
+
+
+
+    public void uploadProfileImage(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new InvalidRequestException("File cannot be empty");
+        }
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new InvalidRequestException("File size must be less than 5MB");
+        }
+        if (!file.getContentType().startsWith("image/")) {
+            throw new InvalidRequestException("Only image files are allowed");
+        }
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getPrincipal();
+        String email = userDetails.getUsername();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new InvalidRequestException("User not found"));
+        try {
+            String originalName = file.getOriginalFilename();
+            String extension = originalName.substring(originalName.lastIndexOf("."));
+            String fileName = user.getId() + extension;
+            Path path = Paths.get(BASE_PATH + fileName);
+            Files.createDirectories(path.getParent());
+            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to store image", e);
+        }
+    }
+
+
+
+
+
 }
