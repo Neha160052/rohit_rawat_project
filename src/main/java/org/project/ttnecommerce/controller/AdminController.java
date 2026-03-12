@@ -28,13 +28,14 @@ public class AdminController {
     }
 
     @GetMapping("/sellers")
-    public List<AdminSellerResponse> getAllSellers(
+    public ResponseEntity<List<AdminSellerResponse>> getAllSellers(
             @RequestParam(defaultValue = "0") int pageOffset,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "id") String sort,
             @RequestParam(required = false) String email
     ) {
-        return adminService.getAllSellers(pageOffset, pageSize, sort, email);
+        List<AdminSellerResponse> sellers =  adminService.getAllSellers(pageOffset, pageSize, sort, email);
+        return ResponseEntity.ok(sellers);
     }
 
     @PatchMapping("/customers/activate/{id}")

@@ -35,44 +35,33 @@ public class SellerService {
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new PasswordMismatchException("Passwords do not match");
         }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException("Email already exists");
+        }
         if (sellerRepository.existsByGst(request.getGst())) {
             throw new GstAlreadyExistsException("GST already registered");
         }
         if (sellerRepository.existsByCompanyNameIgnoreCase(request.getCompanyName())) {
             throw new CompanyAlreadyExistsException("Company name already exists");
         }
-        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
-        if (user == null) {
-            user = new User();
-            user.setEmail(request.getEmail());
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-            user.setFirstName(request.getFirstName());
-            user.setLastName(request.getLastName());
-            user.setIsActive(false);
-            user.setIsDeleted(false);
-            user.setIsLocked(false);
-            user.setIsExpired(false);
-        }
-        else {
-            if (user.getSeller() != null) {
-                throw new InvalidRequestException("User already registered as seller");
-            }
-        }
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setIsActive(false);
+        user.setIsDeleted(false);
+        user.setIsLocked(false);
+        user.setIsExpired(false);
 
         Role sellerRole = roleRepository
                 .findByAuthority("ROLE_SELLER")
                 .orElseThrow(() -> new RuntimeException("Seller role not found"));
 
-        boolean hasRole = user.getUserRoles()
-                .stream()
-                .anyMatch(ur -> ur.getRole().getAuthority().equals("ROLE_SELLER"));
-
-        if (!hasRole) {
-            UserRole userRole = new UserRole();
-            userRole.setUser(user);
-            userRole.setRole(sellerRole);
-            user.getUserRoles().add(userRole);
-        }
+        UserRole userRole = new UserRole();
+        userRole.setUser(user);
+        userRole.setRole(sellerRole);
+        user.getUserRoles().add(userRole);
         userRepository.save(user);
         Seller seller = new Seller();
         seller.setUser(user);

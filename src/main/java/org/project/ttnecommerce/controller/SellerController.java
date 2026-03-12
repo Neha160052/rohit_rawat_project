@@ -52,6 +52,7 @@ public class SellerController {
 
     @PatchMapping("/change-address/{addressId}")
     public ResponseEntity<String> updateAddress(
+
             @PathVariable UUID addressId,
             @Valid @RequestBody UpdateAddressRequest request) {
 

@@ -1,5 +1,4 @@
 package org.project.ttnecommerce.service;
-
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.project.ttnecommerce.entity.RefreshToken;
@@ -18,29 +17,24 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Transactional
-    public RefreshToken createRefreshToken(User user){
+    public RefreshToken createRefreshToken(User user) {
 
-        refreshTokenRepository.findByUserId(user.getId())
-                .ifPresent(refreshTokenRepository::delete);
+        refreshTokenRepository.deleteByUser_Id(user.getId());
 
-        RefreshToken token = new RefreshToken();
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setUser(user);
+        refreshToken.setToken(UUID.randomUUID().toString());
+        refreshToken.setExpiryDate(LocalDateTime.now().plusHours(24));
 
-        token.setUser(user);
-        token.setToken(UUID.randomUUID().toString());
-        token.setExpiryDate(LocalDateTime.now().plusHours(24));
-
-        return refreshTokenRepository.save(token);
+        return refreshTokenRepository.save(refreshToken);
     }
 
-    public RefreshToken verifyExpiration(RefreshToken token){
+    public RefreshToken verifyExpiration(RefreshToken token) {
 
-        if(token.getExpiryDate().isBefore(LocalDateTime.now())){
-
+        if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(token);
-
             throw new TokenRefreshException("Refresh token expired");
         }
-
         return token;
     }
 }

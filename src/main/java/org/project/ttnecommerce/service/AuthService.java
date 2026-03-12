@@ -33,7 +33,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
 
-    public LoginResponse login(LoginRequest request, String role, HttpServletResponse response) {
+    public LoginResponse login(LoginRequest request, HttpServletResponse response) {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -52,17 +52,6 @@ public class AuthService {
 
         if (user.getIsExpired()) {
             throw new RuntimeException("Account expired");
-        }
-
-        // ROLE VALIDATION
-        String requiredRole = "ROLE_" + role;
-
-        boolean hasRole = user.getUserRoles()
-                .stream()
-                .anyMatch(r -> r.getRole().getAuthority().equals(requiredRole));
-
-        if (!hasRole) {
-            throw new RuntimeException("Invalid login endpoint for the role");
         }
 
         try {
