@@ -207,7 +207,7 @@ public class SellerService {
 
     // update seller password method
     @Transactional
-    public void updateSellerPassword(UpdateSellerPasswordRequest request) {
+    public void updateSellerPassword(UpdatePasswordRequest request) {
 
         CustomUserDetails userDetails =
                 (CustomUserDetails) SecurityContextHolder

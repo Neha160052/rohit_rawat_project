@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.UUID;
+
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/customers")
@@ -39,9 +41,16 @@ public class CustomerController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<CustomerProfileResponse> viewMyProfile() {
+    public ResponseEntity<CustomerProfileResponse> viewCustomerProfile() {
         CustomerProfileResponse response = customerService.getCustomerProfile();
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/update-profile")
+    public ResponseEntity<ApiResponse> updateCustomerProfile(
+            @Valid @RequestBody UpdateCustomerProfileRequest request) {
+        customerService.updateCustomerProfile(request);
+        return ResponseEntity.ok(new ApiResponse("Profile updated successfully"));
     }
 
 
@@ -56,6 +65,42 @@ public class CustomerController {
     public ResponseEntity<java.util.List<AddAddressResponse>> getMyAddresses() {
         return ResponseEntity.ok(customerService.getMyAddresses());
     }
+
+    @PatchMapping("/change-password")
+    public ResponseEntity<ApiResponse> changePassword(
+            @Valid @RequestBody UpdatePasswordRequest request) {
+
+        customerService.changePassword(request);
+
+        return ResponseEntity.ok(
+                new ApiResponse("Password updated successfully")
+        );
+    }
+
+
+    @DeleteMapping("/address/{addressId}")
+    public ResponseEntity<ApiResponse> deleteAddress(
+            @PathVariable UUID addressId) {
+
+        customerService.deleteAddress(addressId);
+
+        return ResponseEntity.ok(
+                new ApiResponse("Address deleted successfully")
+        );
+    }
+
+    @PatchMapping("/address/{addressId}")
+    public ResponseEntity<ApiResponse> updateAddress(
+            @PathVariable UUID addressId,
+            @Valid @RequestBody UpdateAddressRequest request) {
+
+        customerService.updateAddress(addressId, request);
+
+        return ResponseEntity.ok(
+                new ApiResponse("Address updated successfully")
+        );
+    }
+
 
     @PostMapping("/profile/image")
     public ResponseEntity<String> uploadProfileImage(@RequestParam("file") MultipartFile file) {

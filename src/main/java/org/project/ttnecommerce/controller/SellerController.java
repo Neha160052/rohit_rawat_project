@@ -43,7 +43,7 @@ public class SellerController {
 
     @PatchMapping("/change-password")
     public ResponseEntity<String> updatePassword(
-            @Valid @RequestBody UpdateSellerPasswordRequest request) {
+            @Valid @RequestBody UpdatePasswordRequest request) {
 
         sellerService.updateSellerPassword(request);
 
