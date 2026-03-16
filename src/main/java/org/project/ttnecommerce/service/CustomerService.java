@@ -14,9 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.*;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +28,9 @@ public class CustomerService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+    private final ProductVariationRepository productVariationRepository;
+    private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
 
 
     private static final String BASE_PATH = "uploads/users/";
@@ -169,23 +170,18 @@ public class CustomerService {
 
         if (hasText(request.getContact())) {
             String newContact = request.getContact().trim();
-
             if (newContact.equals(customer.getContact())) {
                 throw new InvalidRequestException("New contact must be different from current contact");
             }
-
             if (customerRepository.existsByContact(newContact)) {
                 throw new InvalidRequestException("Contact number already exists");
             }
-
             customer.setContact(newContact);
             updated = true;
         }
-
         if (!updated) {
             throw new InvalidRequestException("At least one valid field must be provided for update");
         }
-
         userRepository.save(user);
     }
 
@@ -209,7 +205,6 @@ public class CustomerService {
     }
 
     // get customer address method
-
     public List<AddAddressResponse> getMyAddresses() {
         User user = getCurrentAuthenticatedUser();
         validateActiveUser(user);
@@ -318,18 +313,13 @@ public class CustomerService {
         List<Category> categories;
 
         if (categoryId == null) {
-
-            // root categories
             categories = categoryRepository.findByParentCategoryIsNullAndIsDeletedFalse();
-
-        } else {
-
-            Category parent = categoryRepository
-                    .findByIdAndIsDeletedFalse(categoryId)
+        }
+        else {
+            Category parent = categoryRepository.findByIdAndIsDeletedFalse(categoryId)
                     .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
-            categories = categoryRepository
-                    .findByParentCategoryAndIsDeletedFalse(parent);
+            categories = categoryRepository.findByParentCategoryAndIsDeletedFalse(parent);
         }
 
         return categories.stream()
@@ -341,33 +331,82 @@ public class CustomerService {
     }
 
 
+    //getCategoryFilterDetails method
+    @Transactional
+    public CategoryFilterResponse getCategoryFilterDetails(UUID categoryId) {
+
+        Category category = categoryRepository
+                .findByIdAndIsDeletedFalse(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+        List<Category> categoryTree = new ArrayList<>();
+        collectChildCategories(category, categoryTree);
+
+        List<UUID> categoryIds = categoryTree.stream()
+                .map(Category::getId)
+                .toList();
+
+        List<CategoryMetadataFieldValues> metadataValues =
+                categoryMetadataFieldValuesRepository.findByCategory(category);
+
+        List<MetadataFieldWithValuesResponse> metadataResponses =
+                metadataValues.stream()
+                        .map(m -> new MetadataFieldWithValuesResponse(
+                                m.getMetadataField().getId(),
+                                m.getMetadataField().getName(),
+                                Arrays.stream(m.getValue().split(","))
+                                        .map(String::trim)
+                                        .toList()
+                        ))
+                        .toList();
+
+        List<String> brands = productRepository.findDistinctBrands(categoryTree);
+
+        List<Object[]> result = productVariationRepository.findMinMaxPrice(categoryIds);
+
+        Double minPrice = null;
+        Double maxPrice = null;
+
+        if (!result.isEmpty()) {
+            Object[] row = result.get(0);
+
+            if (row[0] != null) {
+                minPrice = ((Number) row[0]).doubleValue();
+            }
+
+            if (row[1] != null) {
+                maxPrice = ((Number) row[1]).doubleValue();
+            }
+        }
+        PriceRangeResponse priceRange = new PriceRangeResponse(minPrice, maxPrice);
+
+        return new CategoryFilterResponse(metadataResponses, brands, priceRange);
+    }
 
 
-
-
-
-
-
+    private void collectChildCategories(Category category, List<Category> categoryList) {
+        categoryList.add(category);
+        if (category.getChildren() != null && !category.getChildren().isEmpty()) {
+            for (Category child : category.getChildren()) {
+                collectChildCategories(child, categoryList);
+            }
+        }
+    }
 
 
 
     // upload customer profile method
     public void uploadProfileImage(MultipartFile file) {
-
         if (file == null || file.isEmpty()) {
             throw new InvalidRequestException("File cannot be empty");
         }
-
         if (file.getSize() > 5 * 1024 * 1024) {
             throw new InvalidRequestException("File size must be less than 5MB");
         }
-
         if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
             throw new InvalidRequestException("Only image files are allowed");
         }
-
         User user = getCurrentAuthenticatedUser();
-
         try {
             String extension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
             String fileName = user.getId() + extension;
@@ -380,7 +419,6 @@ public class CustomerService {
         }
     }
 
-
     private User getCurrentAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder
                 .getContext()
@@ -389,33 +427,24 @@ public class CustomerService {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new InvalidRequestException("Invalid or missing access token");
         }
-
         Object principal = authentication.getPrincipal();
-
         if (!(principal instanceof CustomUserDetails userDetails)) {
             throw new InvalidRequestException("Invalid or missing access token");
         }
 
-        return userRepository
-                .findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        return userRepository.findByEmail(userDetails.getUsername()).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     private void validateActiveUser(User user) {
-
         if (Boolean.TRUE.equals(user.getIsDeleted()))
             throw new InvalidRequestException("User account is deleted");
-
         if (!Boolean.TRUE.equals(user.getIsActive()))
             throw new InvalidRequestException("User account is not active");
-
         if (Boolean.TRUE.equals(user.getIsLocked()))
             throw new InvalidRequestException("User account is locked");
-
         if (Boolean.TRUE.equals(user.getIsExpired()))
             throw new InvalidRequestException("User account is expired");
     }
-
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
     }

@@ -14,5 +14,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
 
     Optional<RefreshToken> findByUser_Id(UUID userId);
 
+    // used to delete existing token when new login happens
     void deleteByUser_Id(UUID userId);
 }

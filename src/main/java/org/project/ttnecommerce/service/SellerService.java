@@ -327,10 +327,8 @@ public class SellerService {
                 }
             }
 
-            List<MetadataFieldWithValuesResponse> metadataResponses =
-                    new ArrayList<>(metadataMap.values());
+            List<MetadataFieldWithValuesResponse> metadataResponses = new ArrayList<>(metadataMap.values());
 
-            // build parent category chain
             List<String> parentCategoryChain = new ArrayList<>();
             Category parent = category.getParentCategory();
 
@@ -338,9 +336,7 @@ public class SellerService {
                 parentCategoryChain.add(parent.getName());
                 parent = parent.getParentCategory();
             }
-
             Collections.reverse(parentCategoryChain);
-
             categoryResponses.add(
                     new SellerCategoryResponse(
                             category.getId(),

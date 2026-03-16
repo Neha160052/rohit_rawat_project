@@ -27,44 +27,77 @@ public class AuthController {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
 
+    // LOGIN
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @RequestBody LoginRequest request,
             HttpServletResponse response) {
-        return ResponseEntity.ok(authService.login(request, response));
+
+        LoginResponse loginResponse = authService.login(request, response);
+
+        return ResponseEntity.ok(loginResponse);
     }
 
+    // REFRESH ACCESS TOKEN
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponse> refreshToken(
-            @CookieValue("refreshToken") String refreshToken) {
+            @CookieValue(name = "refreshToken") String refreshToken) {
 
         RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new InvalidToken("Invalid refresh token"));
 
         refreshTokenService.verifyExpiration(token);
-        String accessToken = jwtUtils.generateToken(new CustomUserDetails(token.getUser()));
+
+        String accessToken =
+                jwtUtils.generateToken(
+                        new CustomUserDetails(token.getUser())
+                );
+
         return ResponseEntity.ok(new LoginResponse(accessToken));
     }
 
+    // LOGOUT
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("refreshToken".equals(cookie.getName())) {
-                    String refreshToken = cookie.getValue();
-                    authService.logout(refreshToken);
-                    ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
-                            .httpOnly(true)
-                            .secure(false)
-                            .path("/")
-                            .maxAge(0)
-                            .build();
+    public ResponseEntity<?> logout(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @RequestHeader("Authorization") String authHeader) {
 
-                    response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+        String accessToken = null;
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            accessToken = authHeader.substring(7);
+        }
+
+        Cookie[] cookies = request.getCookies();
+
+        if (cookies != null) {
+
+            for (Cookie cookie : cookies) {
+
+                if ("refreshToken".equals(cookie.getName())) {
+
+                    String refreshToken = cookie.getValue();
+
+                    authService.logout(refreshToken, accessToken);
+
+                    ResponseCookie deleteCookie =
+                            ResponseCookie.from("refreshToken", "")
+                                    .httpOnly(true)
+                                    .secure(false)
+                                    .path("/")
+                                    .maxAge(0)
+                                    .sameSite("Strict")
+                                    .build();
+
+                    response.addHeader(
+                            HttpHeaders.SET_COOKIE,
+                            deleteCookie.toString()
+                    );
                 }
             }
         }
+
         return ResponseEntity.ok("Logout successful");
     }
 }

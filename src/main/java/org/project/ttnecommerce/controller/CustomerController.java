@@ -115,6 +115,12 @@ public class CustomerController {
         return ResponseEntity.ok(customerService.getCategories(categoryId));
     }
 
+    @GetMapping("/get-category/filter-details")
+    public ResponseEntity<CategoryFilterResponse> getCategoryFilterDetails(@RequestParam UUID categoryId) {
+        CategoryFilterResponse response = customerService.getCategoryFilterDetails(categoryId);
+        return ResponseEntity.ok(response);
+    }
+
 
 
 

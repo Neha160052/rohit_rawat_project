@@ -1,20 +1,14 @@
 package org.project.ttnecommerce.service;
-
 import lombok.RequiredArgsConstructor;
 import org.project.ttnecommerce.dto.*;
 import org.project.ttnecommerce.entity.*;
 import org.project.ttnecommerce.exception.InvalidInputException;
 import org.project.ttnecommerce.exception.InvalidRequestException;
-import org.project.ttnecommerce.repository.CategoryMetadataFieldRepository;
-import org.project.ttnecommerce.repository.CategoryMetadataFieldValuesRepository;
-import org.project.ttnecommerce.repository.CategoryRepository;
-import org.project.ttnecommerce.repository.UserRepository;
+import org.project.ttnecommerce.repository.*;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.*;
-import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -25,52 +19,62 @@ public class AdminService {
     private final CategoryMetadataFieldRepository metadataRepository;
     private final CategoryRepository categoryRepository;
     private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
+    private final ProductRepository productRepository;
 
-    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", "email", "firstName", "lastName");
-
-    private static final Set<String> CATEGORY_SORT_FIELDS = Set.of("id", "name");
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id","email","firstName","lastName");
+    private static final Set<String> CATEGORY_SORT_FIELDS = Set.of("id","name");
 
 
     // getAll Customer method
-    public List<AdminCustomerResponse> getAllCustomers(int pageOffset, int pageSize, String sort, String email) {
-        validatePagination(pageOffset, pageSize);
+    public List<AdminCustomerResponse> getAllCustomers(int pageOffset,int pageSize,String sort,String email){
+
+        validatePagination(pageOffset,pageSize);
         validateSort(sort);
-        Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort).ascending());
+
+        Pageable pageable = PageRequest.of(pageOffset,pageSize,Sort.by(sort).ascending());
+
         Page<User> customers;
-        if (email != null && !email.isBlank()) {
-            customers = userRepository.findByCustomerIsNotNullAndEmailContainingIgnoreCaseAndIsDeletedFalse(email, pageable);
+        if(email!=null && !email.isBlank()){
+            customers = userRepository.findByCustomerIsNotNullAndEmailContainingIgnoreCaseAndIsDeletedFalse(email,pageable);
         }
-        else {
+        else{
             customers = userRepository.findByCustomerIsNotNullAndIsDeletedFalse(pageable);
         }
         return customers.map(this::convertCustomerToDTO).getContent();
     }
 
+
     // getAll Seller method
-    public List<AdminSellerResponse> getAllSellers(int pageOffset, int pageSize, String sort, String email) {
-        validatePagination(pageOffset, pageSize);
+    public List<AdminSellerResponse> getAllSellers(int pageOffset,int pageSize,String sort,String email){
+
+        validatePagination(pageOffset,pageSize);
         validateSort(sort);
-        Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort).ascending());
+
+        Pageable pageable = PageRequest.of(pageOffset,pageSize,Sort.by(sort).ascending());
         Page<User> sellers;
-        if (email != null && !email.isBlank()) {
-            sellers = userRepository.findBySellerIsNotNullAndEmailContainingIgnoreCaseAndIsDeletedFalse(email, pageable);
+        if(email!=null && !email.isBlank()){
+            sellers = userRepository.findBySellerIsNotNullAndEmailContainingIgnoreCaseAndIsDeletedFalse(email,pageable);
         }
-        else {
+        else{
             sellers = userRepository.findBySellerIsNotNullAndIsDeletedFalse(pageable);
         }
         return sellers.map(this::convertSellerToDTO).getContent();
     }
 
-    // activateCustomer method
+
+    // activate customer method
     @Transactional
-    public String activateCustomer(UUID userId) {
-
+    public String activateCustomer(UUID userId){
         User user = userRepository.findById(userId).orElseThrow(() -> new InvalidRequestException("User not found"));
-        if (user.getIsDeleted()) throw new InvalidRequestException("Deleted User Cannot be Activated");
 
-        if (user.getCustomer() == null) throw new InvalidRequestException("User is not a customer");
+        if(user.getIsDeleted())
+            throw new InvalidRequestException("Deleted User Cannot be Activated");
 
-        if (user.getIsActive()) return "Customer already active";
+        if(user.getCustomer()==null)
+            throw new InvalidRequestException("User is not a customer");
+
+        if(user.getIsActive())
+            return "Customer already active";
 
         user.setIsActive(true);
         userRepository.save(user);
@@ -78,64 +82,69 @@ public class AdminService {
         return "Customer activated successfully";
     }
 
-    // deactivateCustomer method
+
+    // deactivate customer method
     @Transactional
-    public String deactivateCustomer(UUID userId) {
+    public String deactivateCustomer(UUID userId){
         User user = userRepository.findById(userId).orElseThrow(() -> new InvalidRequestException("User not found"));
 
-        if (user.getIsDeleted())
+        if(user.getIsDeleted())
             throw new InvalidRequestException("Deleted Customer Cannot be Deactivated");
 
-        if (user.getCustomer() == null)
+        if(user.getCustomer()==null)
             throw new InvalidRequestException("User is not a customer");
 
-        if (!user.getIsActive())
+        if(!user.getIsActive())
             return "Customer already deactivated";
 
         user.setIsActive(false);
         userRepository.save(user);
-
         emailService.sendCustomerDeactivationEmailByAdmin(user);
 
         return "Customer deactivated successfully";
     }
 
+
     // activate Seller method
     @Transactional
-    public String activateSeller(UUID userId) {
-
+    public String activateSeller(UUID userId){
         User user = userRepository.findById(userId).orElseThrow(() -> new InvalidRequestException("User not found"));
-        if (user.getIsDeleted())
+
+        if(user.getIsDeleted())
             throw new InvalidRequestException("Deleted Seller Cannot be Activated");
 
         Seller seller = user.getSeller();
-        if (seller == null)
+
+        if(seller==null)
             throw new InvalidRequestException("User is not a seller");
 
-        if (user.getIsActive() && seller.getIsApproved())
+        if(user.getIsActive() && seller.getIsApproved())
             return "Seller already active";
 
         user.setIsActive(true);
         seller.setIsApproved(true);
+        seller.setIsApproved(true);
+
+        userRepository.save(user);
         emailService.sendSellerActivationEmailByAdmin(user);
         return "Seller activated successfully";
     }
-    // Deactivate Seller method
 
+
+    // deactivate seller method
     @Transactional
-    public String deactivateSeller(UUID userId) {
+    public String deactivateSeller(UUID userId){
+        User user = userRepository.findById(userId).orElseThrow(() -> new InvalidRequestException("User not found"));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new InvalidRequestException("User not found"));
-
-        if (user.getIsDeleted())
+        if(user.getIsDeleted())
             throw new InvalidRequestException("Deleted Seller Cannot be Deactivated");
 
         Seller seller = user.getSeller();
-        if (user.getSeller() == null)
+
+        if(seller==null)
             throw new InvalidRequestException("User is not a seller");
 
-        if (!user.getIsActive())
+        if(!user.getIsActive())
             return "Seller already deactivated";
 
         user.setIsActive(false);
@@ -145,11 +154,13 @@ public class AdminService {
         return "Seller deactivated successfully";
     }
 
-    // Add-Metadata field method
+
+    // addMetadataField method
     @Transactional
-    public String addMetadataField(AddMetadataFieldRequest request) {
+    public String addMetadataField(AddMetadataFieldRequest request){
         String fieldName = request.getName().trim().toLowerCase();
-        if (fieldName.isBlank())
+
+        if(fieldName.isBlank())
             throw new InvalidInputException("Field name cannot be empty");
 
         metadataRepository.findByNameIgnoreCaseAndIsDeletedFalse(fieldName).ifPresent(field -> {
@@ -160,60 +171,74 @@ public class AdminService {
                 .name(fieldName)
                 .isDeleted(false)
                 .build();
+
         metadataRepository.save(field);
-        return "Metadata field created successfully with ID: " + field.getId();
+        return "Metadata field created successfully with ID: "+field.getId();
     }
 
-    // get metafield method
 
-    public List<MetadataFieldResponse> getAllMetadataFields(Integer max, Integer offset, String sort, String order, String query) {
+    // getAll MetadataFields method
 
-        if (max == null || max <= 0) max = 10;
-        if (offset == null || offset < 0) offset = 0;
-        if (sort == null) sort = "name";
+    public List<MetadataFieldResponse> getAllMetadataFields(Integer max,Integer offset,String sort,String order,String query){
 
-        Sort.Direction direction = "desc".equalsIgnoreCase(order) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(offset, max, Sort.by(direction, sort));
+        if(max==null || max<=0) max=10;
+        if(offset==null || offset<0) offset=0;
+        if(sort==null) sort="name";
+
+        Sort.Direction direction = "desc".equalsIgnoreCase(order)?Sort.Direction.DESC:Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(offset,max,Sort.by(direction,sort));
         Page<CategoryMetadataField> fields;
-        if (query != null && !query.trim().isEmpty()) {
-            fields = metadataRepository.findByNameContainingIgnoreCaseAndIsDeletedFalse(query.trim(), pageable);
-        }
-        else {
+
+        if(query!=null && !query.trim().isEmpty()){
+            fields = metadataRepository.findByNameContainingIgnoreCaseAndIsDeletedFalse(query.trim(),pageable);
+        }else{
             fields = metadataRepository.findByIsDeletedFalse(pageable);
         }
-
         return fields.stream()
-                .map(field -> new MetadataFieldResponse(field.getId(), field.getName()))
+                .map(field -> new MetadataFieldResponse(field.getId(),field.getName()))
                 .toList();
     }
 
-    // add Category method
 
+    // addCategory Method
     @Transactional
-    public String addCategory(AddCategoryRequest request) {
+    public String addCategory(AddCategoryRequest request){
         String name = request.getName().trim();
-        if (name.isEmpty())
+
+        if(name.isEmpty())
             throw new InvalidInputException("Category name cannot be empty");
 
         Category parent = null;
 
-        if (request.getParentId() != null) {
-            parent = categoryRepository.findById(request.getParentId()).orElseThrow(() -> new InvalidRequestException("Parent category not found"));
+        if(request.getParentId()!=null){
+            parent = categoryRepository.findByIdAndIsDeletedFalse(request.getParentId())
+                    .orElseThrow(() -> new InvalidRequestException("Parent category not found"));
 
-            if (parent.getIsDeleted())
-                throw new InvalidRequestException("Parent category is deleted");
-
-            categoryRepository.findByNameIgnoreCaseAndParentCategoryIdAndIsDeletedFalse(name, parent.getId()).ifPresent(c -> {
+            categoryRepository.findByNameIgnoreCaseAndParentCategoryIdAndIsDeletedFalse(name,parent.getId()).ifPresent(c -> {
                         throw new InvalidRequestException("Category already exists under this parent");
                     });
 
+            Category temp = parent;
+
+            while(temp!=null){
+                if(temp.getName().equalsIgnoreCase(name)){
+                    throw new InvalidRequestException("Category already exists in hierarchy");
+                }
+                temp = temp.getParentCategory();
+            }
+
+            if(productRepository.existsByCategoryAndIsDeletedFalse(parent)){
+                throw new InvalidRequestException(
+                        "Cannot add subcategory because parent category has products");
+            }
+
         }
-        else {
-            categoryRepository.findByNameIgnoreCaseAndParentCategoryIsNullAndIsDeletedFalse(name).ifPresent(c -> {
+        else{
+            categoryRepository.findByNameIgnoreCaseAndParentCategoryIsNullAndIsDeletedFalse(name)
+                    .ifPresent(c -> {
                         throw new InvalidRequestException("Root category already exists");
                     });
         }
-
         Category category = Category.builder()
                 .name(name)
                 .parentCategory(parent)
@@ -221,41 +246,49 @@ public class AdminService {
                 .build();
 
         categoryRepository.save(category);
-        return "Category created successfully with ID: " + category.getId();
+        return "Category created successfully with ID: "+category.getId();
     }
 
-    // getAll categories method
 
-    public List<CategoryResponse> getAllCategories(int max, int offset, String sort, String order, String query, UUID categoryId) {
-        if (max <= 0 || max > 100)
+    // get All Category
+
+    public List<CategoryResponse> getAllCategories(int max,int offset,String sort,String order,String query,UUID categoryId){
+        if(max<=0 || max>100)
             throw new InvalidInputException("max must be between 1 and 100");
 
-        if (offset < 0)
+        if(offset<0)
             throw new InvalidInputException("offset cannot be negative");
 
-        if (!CATEGORY_SORT_FIELDS.contains(sort))
+        if(!CATEGORY_SORT_FIELDS.contains(sort))
             throw new InvalidInputException("Invalid sort field");
 
-        if (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc"))
+        if(!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc"))
             throw new InvalidInputException("order must be asc or desc");
 
-        Sort.Direction direction = order.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(offset, max, Sort.by(direction, sort));
+        Sort.Direction direction = order.equalsIgnoreCase("asc")?Sort.Direction.ASC:Sort.Direction.DESC;
+
+        Pageable pageable = PageRequest.of(offset,max,Sort.by(direction,sort));
+
+        if(categoryId!=null){
+            Category category = categoryRepository.findByIdAndIsDeletedFalse(categoryId)
+                    .orElseThrow(() -> new InvalidRequestException("Category not found"));
+            return List.of(mapToCategoryResponse(category));
+        }
+
         Page<Category> page;
 
-        if (query != null && !query.isBlank()) {
-            page = categoryRepository.findByNameContainingIgnoreCaseAndIsDeletedFalse(query, pageable);
+        if(query!=null && !query.isBlank()){
+            page = categoryRepository.findByNameContainingIgnoreCaseAndIsDeletedFalse(query,pageable);
         }
         else {
             page = categoryRepository.findByIsDeletedFalse(pageable);
         }
+
         return page.getContent()
                 .stream()
                 .map(this::mapToCategoryResponse)
                 .toList();
     }
-
-    // map category response
 
     private CategoryResponse mapToCategoryResponse(Category category) {
         CategoryResponse response = new CategoryResponse();
@@ -281,6 +314,7 @@ public class AdminService {
     }
 
     private List<ChildCategoryDto> mapChildren(Category category) {
+
         return category.getChildren()
                 .stream()
                 .filter(child -> !child.getIsDeleted())
@@ -289,74 +323,63 @@ public class AdminService {
                     dto.setId(child.getId());
                     dto.setName(child.getName());
                     return dto;
-                })
-                .toList();
+                }).toList();
     }
 
-    private List<CategoryMetadataFieldResponse> mapMetadata(Category category) {
 
+
+
+    private List<CategoryMetadataFieldResponse> mapMetadata(Category category) {
         return category.getCategoryMetadataFieldValues()
                 .stream()
                 .map(value -> {
                     CategoryMetadataFieldResponse dto = new CategoryMetadataFieldResponse();
                     dto.setFieldName(value.getMetadataField().getName());
-                    dto.setPossibleValues(Arrays.asList(value.getValue().split(",")));
+                    dto.setPossibleValues(
+                            Arrays.asList(value.getValue().split(","))
+                    );
                     return dto;
-
-                })
-                .toList();
+                }).toList();
     }
 
 
-    // update category method
+    // update Category method
     @Transactional
-    public String updateCategory(UpdateCategoryRequest request) {
-
+    public String updateCategory(UpdateCategoryRequest request){
         UUID id = request.getId();
         String name = request.getName().trim();
 
-        if (id == null) {
+        if(id==null)
             throw new InvalidInputException("Category id cannot be null");
-        }
 
-        if (name.isEmpty()) {
+        if(name.isEmpty())
             throw new InvalidInputException("Category name cannot be empty");
-        }
 
-        Category category = categoryRepository
-                .findByIdAndIsDeletedFalse(id)
+        Category category = categoryRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new InvalidRequestException("Category not found"));
 
         Category parent = category.getParentCategory();
-
-        if (parent == null) {
-
-            categoryRepository
-                    .findByNameIgnoreCaseAndParentCategoryIsNullAndIsDeletedFalse(name)
+        if(parent==null){
+            categoryRepository.findByNameIgnoreCaseAndParentCategoryIsNullAndIsDeletedFalse(name)
                     .ifPresent(existing -> {
-                        if (!existing.getId().equals(id)) {
+                        if(!existing.getId().equals(id)){
                             throw new InvalidRequestException("Root category already exists");
                         }
                     });
-
-        } else {
-
-            categoryRepository
-                    .findByNameIgnoreCaseAndParentCategoryIdAndIsDeletedFalse(name, parent.getId())
+        }
+        else {
+            categoryRepository.findByNameIgnoreCaseAndParentCategoryIdAndIsDeletedFalse(name,parent.getId())
                     .ifPresent(existing -> {
-                        if (!existing.getId().equals(id)) {
+                        if(!existing.getId().equals(id)){
                             throw new InvalidRequestException("Category already exists under this parent");
                         }
                     });
         }
 
         category.setName(name);
-
         categoryRepository.save(category);
-
         return "Category updated successfully";
     }
-
 
 
     // add category metadata method
@@ -367,16 +390,13 @@ public class AdminService {
             throw new InvalidInputException("Category id is required");
         }
 
-        Category category = categoryRepository
-                .findByIdAndIsDeletedFalse(request.getCategoryId())
+        Category category = categoryRepository.findByIdAndIsDeletedFalse(request.getCategoryId())
                 .orElseThrow(() -> new InvalidRequestException("Category not found"));
 
         if (request.getMetadata() == null || request.getMetadata().isEmpty()) {
             throw new InvalidInputException("Metadata list cannot be empty");
         }
-
         Set<UUID> usedFieldIds = new HashSet<>();
-
         for (MetadataFieldValuesRequest meta : request.getMetadata()) {
 
             if (meta.getFieldId() == null) {
@@ -429,46 +449,29 @@ public class AdminService {
     }
 
 
+    private void validatePagination(int pageOffset,int pageSize){
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // ================= UTIL METHODS =================
-
-    private void validatePagination(int pageOffset, int pageSize) {
-
-        if (pageOffset < 0)
+        if(pageOffset<0)
             throw new InvalidRequestException("Page offset cannot be negative");
 
-        if (pageSize <= 0)
+        if(pageSize<=0)
             throw new InvalidRequestException("Page size must be greater than zero");
 
-        if (pageSize > 50)
+        if(pageSize>50)
             throw new InvalidRequestException("Page size cannot exceed 50");
     }
 
-    private void validateSort(String sort) {
+    private void validateSort(String sort){
 
-        if (!ALLOWED_SORT_FIELDS.contains(sort))
-            throw new InvalidRequestException("Invalid sort field: " + sort);
+        if(!ALLOWED_SORT_FIELDS.contains(sort))
+            throw new InvalidRequestException("Invalid sort field: "+sort);
     }
 
-    private AdminCustomerResponse convertCustomerToDTO(User user) {
+    private AdminCustomerResponse convertCustomerToDTO(User user){
 
-        String fullName = user.getFirstName() + " "
-                + (user.getMiddleName() != null ? user.getMiddleName() + " " : "")
-                + user.getLastName();
+        String fullName = user.getFirstName()+" "+
+                (user.getMiddleName()!=null?user.getMiddleName()+" ":"")+
+                user.getLastName();
 
         return new AdminCustomerResponse(
                 user.getId(),
@@ -478,24 +481,23 @@ public class AdminService {
         );
     }
 
-    private AdminSellerResponse convertSellerToDTO(User user) {
+    private AdminSellerResponse convertSellerToDTO(User user){
 
         Seller seller = user.getSeller();
 
-        String fullName = user.getFirstName() + " "
-                + (user.getMiddleName() != null ? user.getMiddleName() + " " : "")
-                + user.getLastName();
+        String fullName = user.getFirstName()+" "+
+                (user.getMiddleName()!=null?user.getMiddleName()+" ":"")+
+                user.getLastName();
 
         Address address = user.getAddresses().stream().findFirst().orElse(null);
 
         String companyAddress = null;
 
-        if (address != null) {
-
-            companyAddress = address.getAddressLine() + ", "
-                    + address.getCity() + ", "
-                    + address.getState() + ", "
-                    + address.getCountry();
+        if(address!=null){
+            companyAddress = address.getAddressLine()+", "+
+                    address.getCity()+", "+
+                    address.getState()+", "+
+                    address.getCountry();
         }
 
         return new AdminSellerResponse(

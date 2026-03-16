@@ -1,4 +1,5 @@
 package org.project.ttnecommerce.security.Utils;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -6,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import org.project.ttnecommerce.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
 import java.security.Key;
 import java.util.Date;
 
@@ -35,17 +37,27 @@ public class JwtUtils {
         return extractAllClaims(token).getSubject();
     }
 
+    public Date extractExpiration(String token){
+        return extractAllClaims(token).getExpiration();
+    }
+
     public boolean isTokenValid(String token, CustomUserDetails userDetails) {
+
         final String username = extractUsername(token);
+
         return username.equals(userDetails.getUsername())
                 && !isTokenExpired(token);
     }
+
     private boolean isTokenExpired(String token) {
-        Date expiration = extractAllClaims(token).getExpiration();
+
+        Date expiration = extractExpiration(token);
+
         return expiration.before(new Date());
     }
 
     private Claims extractAllClaims(String token) {
+
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()

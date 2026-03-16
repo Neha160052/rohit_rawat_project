@@ -11,12 +11,13 @@ import java.util.UUID;
 public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     @Query("""
-           SELECT DISTINCT p.brand
-           FROM Product p
-           WHERE p.category IN :categories
-           AND p.isDeleted = false
-           AND p.isActive = true
-           """)
+        SELECT DISTINCT p.brand
+        FROM Product p
+        WHERE p.category IN :categories
+        AND p.isDeleted = false
+        AND p.isActive = true
+    """)
     List<String> findDistinctBrands(List<Category> categories);
 
+    boolean existsByCategoryAndIsDeletedFalse(Category category);
 }

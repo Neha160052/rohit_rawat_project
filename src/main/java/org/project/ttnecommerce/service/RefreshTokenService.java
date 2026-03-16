@@ -19,12 +19,21 @@ public class RefreshTokenService {
     @Transactional
     public RefreshToken createRefreshToken(User user) {
 
+        /*
+         IMPORTANT FIX
+
+         jab bhi new login hota hai
+         us user ka existing refresh token delete kar dete hain
+
+         isse DB me ek user ka sirf ek refresh token rahega
+        */
         refreshTokenRepository.deleteByUser_Id(user.getId());
 
+        // create new refresh token
         RefreshToken refreshToken = new RefreshToken();
+
         refreshToken.setUser(user);
         refreshToken.setToken(UUID.randomUUID().toString());
-        refreshToken.setExpiryDate(LocalDateTime.now().plusHours(24));
 
         return refreshTokenRepository.save(refreshToken);
     }
