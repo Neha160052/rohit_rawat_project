@@ -1,7 +1,9 @@
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.project.ttnecommerce.entity.base.Auditable;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 
@@ -13,7 +15,7 @@ import java.util.UUID;
 @Builder
 @Table(uniqueConstraints =
 @UniqueConstraint(columnNames = {"customer_user_id","product_variation_id"}))
-public class Cart {
+public class Cart extends Auditable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

@@ -1,6 +1,8 @@
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.project.ttnecommerce.entity.base.Auditable;
+
 import java.util.UUID;
 
 
@@ -10,7 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CategoryMetadataFieldValues {
+public class CategoryMetadataFieldValues extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

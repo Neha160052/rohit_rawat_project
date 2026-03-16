@@ -1,6 +1,8 @@
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.project.ttnecommerce.entity.base.Auditable;
+
 import java.util.UUID;
 
 @Entity
@@ -8,7 +10,7 @@ import java.util.UUID;
 @UniqueConstraint(columnNames = {"product_id","customer_id"}))
 @Getter
 @Setter
-public class ProductReview {
+public class ProductReview extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

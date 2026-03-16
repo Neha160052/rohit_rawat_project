@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.Authentication;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
@@ -27,6 +28,7 @@ public class SellerService {
     private final EmailService emailService;
     private final CategoryRepository categoryRepository;
     private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
+    private final ProductRepository productRepository;
 
     private static final String BASE_PATH = "uploads/users/";
 
@@ -349,6 +351,77 @@ public class SellerService {
 
         return categoryResponses;
     }
+
+
+    // add product method
+    @Transactional
+    public String addProduct(AddProductRequest request) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User seller = userDetails.getUser();
+
+        String name = request.getName().trim();
+        String brand = request.getBrand().trim();
+
+        if (name.isEmpty()) {
+            throw new InvalidInputException("Product name cannot be empty");
+        }
+
+        if (brand.isEmpty()) {
+            throw new InvalidInputException("Brand cannot be empty");
+        }
+
+        Category category = categoryRepository.findByIdAndIsDeletedFalse(request.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+        List<Category> children = categoryRepository.findByParentCategoryAndIsDeletedFalse(category);
+
+        if (!children.isEmpty()) {
+            throw new InvalidRequestException("Product can only be added to leaf category");
+        }
+
+        boolean exists = productRepository.existsBySellerIdAndNameIgnoreCaseAndBrandIgnoreCaseAndCategoryIdAndIsDeletedFalse(seller.getId(),
+                        name,
+                        brand,
+                        category.getId()
+                );
+
+        if (exists) {
+            throw new InvalidRequestException(
+                    "Product already exists with same name, brand and category"
+            );
+        }
+
+        Boolean isCancellable = Boolean.TRUE.equals(request.getIsCancellable());
+        Boolean isReturnable = Boolean.TRUE.equals(request.getIsReturnable());
+
+        Product product = new Product();
+        product.setSeller(seller);
+        product.setName(name);
+        product.setBrand(brand);
+        product.setDescription(request.getDescription());
+        product.setCategory(category);
+        product.setIsCancellable(isCancellable);
+        product.setIsReturnable(isReturnable);
+
+        product.setIsActive(false);
+        product.setIsDeleted(false);
+
+        productRepository.save(product);
+
+        emailService.sendEmail("admin@ecommerce.com", "New Product Added", "Seller " + seller.getEmail() +
+                        " added product: " + name +
+                        " (Brand: " + brand + ") awaiting approval."
+        );
+        return "Product created successfully and is inactive until admin approval";
+    }
+
+
+
+
+
+
 
 
 

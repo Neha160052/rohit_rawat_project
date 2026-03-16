@@ -1,8 +1,10 @@
 package org.project.ttnecommerce.controller;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.project.ttnecommerce.dto.LoginRequest;
 import org.project.ttnecommerce.dto.LoginResponse;
 import org.project.ttnecommerce.entity.RefreshToken;
@@ -17,6 +19,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -27,60 +30,42 @@ public class AuthController {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
 
-    // LOGIN
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(
-            @RequestBody LoginRequest request,
-            HttpServletResponse response) {
-
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request, HttpServletResponse response) {
+        log.info("Login API called for email: {}", request.getEmail());
         LoginResponse loginResponse = authService.login(request, response);
-
         return ResponseEntity.ok(loginResponse);
     }
 
-    // REFRESH ACCESS TOKEN
     @PostMapping("/refresh")
-    public ResponseEntity<LoginResponse> refreshToken(
-            @CookieValue(name = "refreshToken") String refreshToken) {
-
+    public ResponseEntity<LoginResponse> refreshToken(@CookieValue(name = "refreshToken") String refreshToken) {
+        log.info("Refresh token API called");
         RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new InvalidToken("Invalid refresh token"));
-
+                .orElseThrow(() -> {
+                    log.warn("Invalid refresh token used");
+                    return new InvalidToken("Invalid refresh token");
+                });
         refreshTokenService.verifyExpiration(token);
 
-        String accessToken =
-                jwtUtils.generateToken(
-                        new CustomUserDetails(token.getUser())
-                );
+        String accessToken = jwtUtils.generateToken(new CustomUserDetails(token.getUser()));
 
+        log.info("New access token generated for user: {}", token.getUser().getEmail());
         return ResponseEntity.ok(new LoginResponse(accessToken));
     }
 
-    // LOGOUT
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            @RequestHeader("Authorization") String authHeader) {
-
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response, @RequestHeader("Authorization") String authHeader) {
+        log.info("Logout API called");
         String accessToken = null;
-
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             accessToken = authHeader.substring(7);
         }
-
         Cookie[] cookies = request.getCookies();
-
         if (cookies != null) {
-
             for (Cookie cookie : cookies) {
-
                 if ("refreshToken".equals(cookie.getName())) {
-
                     String refreshToken = cookie.getValue();
-
                     authService.logout(refreshToken, accessToken);
-
                     ResponseCookie deleteCookie =
                             ResponseCookie.from("refreshToken", "")
                                     .httpOnly(true)
@@ -90,14 +75,11 @@ public class AuthController {
                                     .sameSite("Strict")
                                     .build();
 
-                    response.addHeader(
-                            HttpHeaders.SET_COOKIE,
-                            deleteCookie.toString()
-                    );
+                    response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+                    log.info("User logged out successfully");
                 }
             }
         }
-
         return ResponseEntity.ok("Logout successful");
     }
 }

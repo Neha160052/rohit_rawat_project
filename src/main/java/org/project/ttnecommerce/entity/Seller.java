@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.project.ttnecommerce.entity.base.Auditable;
 
 import java.util.UUID;
 
@@ -11,7 +12,7 @@ import java.util.UUID;
 @Table(name = "seller")
 @Getter
 @Setter
-public class Seller {
+public class Seller extends Auditable {
 
     @Id
     private UUID id;

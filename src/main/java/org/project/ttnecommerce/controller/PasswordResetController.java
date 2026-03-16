@@ -11,19 +11,21 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-
+@Log4j2
 public class PasswordResetController {
 
     private final PasswordResetService passwordResetService;
 
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        log.info("Password reset API called: Forgot password | email={}", request.getEmail());
         passwordResetService.forgotPassword(request);
         return ResponseEntity.ok("Reset password email sent");
     }
 
     @PutMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        log.info("Password reset API called: Reset password");
         passwordResetService.resetPassword(request);
         return ResponseEntity.ok("Password successfully updated");
     }

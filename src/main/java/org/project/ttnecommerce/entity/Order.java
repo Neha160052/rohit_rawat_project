@@ -2,6 +2,7 @@ package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.project.ttnecommerce.Enum.PaymentMethod;
+import org.project.ttnecommerce.entity.base.Auditable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -10,7 +11,7 @@ import java.util.UUID;
 @Table(name = "orders")
 @Getter
 @Setter
-public class Order {
+public class Order extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

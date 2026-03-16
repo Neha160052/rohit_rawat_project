@@ -1,11 +1,13 @@
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.project.ttnecommerce.entity.base.Auditable;
+
 import java.util.UUID;
 @Entity
 @Getter
 @Setter
-public class ProductVariation {
+public class ProductVariation extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

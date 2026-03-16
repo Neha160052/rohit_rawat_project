@@ -1,6 +1,7 @@
 package org.project.ttnecommerce.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.project.ttnecommerce.dto.*;
 import org.project.ttnecommerce.entity.*;
 import org.project.ttnecommerce.exception.*;
@@ -16,6 +17,7 @@ import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomerService {
@@ -38,12 +40,15 @@ public class CustomerService {
     // Register Customer method
     @Transactional
     public void registerCustomer(RegisterCustomerRequest request) {
+        log.info("Customer registration started | email={}", request.getEmail());
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
+            log.warn("Customer registration failed - password mismatch | email={}", request.getEmail());
             throw new PasswordMismatchException("Passwords do not match");
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Customer registration failed - email already exists | email={}", request.getEmail());
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
@@ -82,15 +87,17 @@ public class CustomerService {
         activationTokenRepository.save(activationToken);
 
         emailService.sendActivationEmail(user.getEmail(), token);
+        log.info("Customer registered successfully | email={}", user.getEmail());
     }
 
     // activate Customer method
     @Transactional
     public void activateCustomer(String token) {
-
+        log.info("Customer activation requested");
         ActivationToken activationToken = activationTokenRepository.findByToken(token).orElseThrow(() -> new InvalidRequestException("Invalid activation token"));
 
         if (activationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            log.warn("Activation token expired");
             throw new InvalidRequestException("Activation token expired");
         }
 
@@ -99,6 +106,7 @@ public class CustomerService {
 
         userRepository.save(user);
         activationTokenRepository.delete(activationToken);
+        log.info("Customer account activated | userId={}", user.getId());
     }
 
     // resend Activation method

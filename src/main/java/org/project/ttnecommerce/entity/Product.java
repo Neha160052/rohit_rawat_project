@@ -1,8 +1,7 @@
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.HashSet;
-import java.util.Set;
+import org.project.ttnecommerce.entity.base.Auditable;
 import java.util.UUID;
 
 
@@ -13,7 +12,7 @@ import java.util.UUID;
         ))
 @Getter
 @Setter
-public class Product {
+public class Product extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

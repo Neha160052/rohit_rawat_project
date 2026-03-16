@@ -1,6 +1,8 @@
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.project.ttnecommerce.entity.base.Auditable;
+
 import java.util.UUID;
 
 @Entity
@@ -9,7 +11,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderProduct {
+public class OrderProduct extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

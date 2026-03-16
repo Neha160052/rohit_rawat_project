@@ -20,4 +20,5 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     List<String> findDistinctBrands(List<Category> categories);
 
     boolean existsByCategoryAndIsDeletedFalse(Category category);
+    boolean existsBySellerIdAndNameIgnoreCaseAndBrandIgnoreCaseAndCategoryIdAndIsDeletedFalse(UUID sellerId, String name, String brand, UUID categoryId);
 }
