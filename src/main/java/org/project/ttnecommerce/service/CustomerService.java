@@ -29,6 +29,8 @@ public class CustomerService {
     private final AddressRepository addressRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final CategoryRepository categoryRepository;
+
 
     private static final String BASE_PATH = "uploads/users/";
 
@@ -119,7 +121,7 @@ public class CustomerService {
         emailService.sendActivationEmail(user.getEmail(), token);
     }
 
-   // get Customer Profile method
+    // get Customer Profile method
     public CustomerProfileResponse getCustomerProfile() {
         User user = getCurrentAuthenticatedUser();
 
@@ -308,6 +310,46 @@ public class CustomerService {
 
         emailService.sendPasswordChangeEmail(user);
     }
+
+
+    // customerCategoryResponse method
+    @Transactional
+    public List<CustomerCategoryResponse> getCategories(UUID categoryId) {
+        List<Category> categories;
+
+        if (categoryId == null) {
+
+            // root categories
+            categories = categoryRepository.findByParentCategoryIsNullAndIsDeletedFalse();
+
+        } else {
+
+            Category parent = categoryRepository
+                    .findByIdAndIsDeletedFalse(categoryId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+            categories = categoryRepository
+                    .findByParentCategoryAndIsDeletedFalse(parent);
+        }
+
+        return categories.stream()
+                .map(c -> new CustomerCategoryResponse(
+                        c.getId(),
+                        c.getName()
+                ))
+                .toList();
+    }
+
+
+
+
+
+
+
+
+
+
+
 
     // upload customer profile method
     public void uploadProfileImage(MultipartFile file) {

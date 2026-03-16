@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -107,5 +108,16 @@ public class CustomerController {
         customerService.uploadProfileImage(file);
         return ResponseEntity.ok("Profile image uploaded successfully");
     }
+
+
+    @GetMapping("/get-categories")
+    public ResponseEntity<List<CustomerCategoryResponse>> getCategories(@RequestParam(required = false) UUID categoryId) {
+        return ResponseEntity.ok(customerService.getCategories(categoryId));
+    }
+
+
+
+
+
 
 }

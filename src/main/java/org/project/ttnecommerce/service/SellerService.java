@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.project.ttnecommerce.dto.*;
 import org.project.ttnecommerce.entity.*;
 import org.project.ttnecommerce.exception.*;
-import org.project.ttnecommerce.repository.AddressRepository;
-import org.project.ttnecommerce.repository.RoleRepository;
-import org.project.ttnecommerce.repository.SellerRepository;
-import org.project.ttnecommerce.repository.UserRepository;
+import org.project.ttnecommerce.repository.*;
 import org.project.ttnecommerce.security.CustomUserDetails;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,7 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +25,8 @@ public class SellerService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final CategoryRepository categoryRepository;
+    private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
 
     private static final String BASE_PATH = "uploads/users/";
 
@@ -284,6 +284,80 @@ public class SellerService {
 
         addressRepository.save(address);
     }
+
+
+
+
+    // get category method
+    @Transactional
+    public List<SellerCategoryResponse> getCategory() {
+
+        List<Category> allCategories = categoryRepository.findByIsDeletedFalse();
+
+        if (allCategories.isEmpty()) {
+            throw new ResourceNotFoundException("No categories found");
+        }
+
+        List<SellerCategoryResponse> categoryResponses = new ArrayList<>();
+
+        for (Category category : allCategories) {
+            if (category.getChildren() != null && !category.getChildren().isEmpty()) {
+                continue;
+            }
+
+            List<CategoryMetadataFieldValues> categoryMetadataValues =
+                    categoryMetadataFieldValuesRepository.findByCategory(category);
+
+            Map<UUID, MetadataFieldWithValuesResponse> metadataMap = new LinkedHashMap<>();
+
+            for (CategoryMetadataFieldValues metadata : categoryMetadataValues) {
+
+                UUID fieldId = metadata.getMetadataField().getId();
+                String fieldName = metadata.getMetadataField().getName();
+
+                List<String> values = Arrays.stream(metadata.getValue().split(","))
+                        .map(String::trim)
+                        .collect(Collectors.toList());
+
+                if (!metadataMap.containsKey(fieldId)) {
+                    metadataMap.put(fieldId,
+                            new MetadataFieldWithValuesResponse(fieldId, fieldName, new ArrayList<>(values)));
+                } else {
+                    metadataMap.get(fieldId).getValues().addAll(values);
+                }
+            }
+
+            List<MetadataFieldWithValuesResponse> metadataResponses =
+                    new ArrayList<>(metadataMap.values());
+
+            // build parent category chain
+            List<String> parentCategoryChain = new ArrayList<>();
+            Category parent = category.getParentCategory();
+
+            while (parent != null) {
+                parentCategoryChain.add(parent.getName());
+                parent = parent.getParentCategory();
+            }
+
+            Collections.reverse(parentCategoryChain);
+
+            categoryResponses.add(
+                    new SellerCategoryResponse(
+                            category.getId(),
+                            category.getName(),
+                            parentCategoryChain,
+                            metadataResponses
+                    )
+            );
+        }
+
+        return categoryResponses;
+    }
+
+
+
+
+
 
     //upload image method
     public void uploadProfileImage(MultipartFile file) {

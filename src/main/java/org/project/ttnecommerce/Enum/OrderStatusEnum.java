@@ -1,0 +1,18 @@
+package org.project.ttnecommerce.Enum;
+
+public enum OrderStatusEnum {
+    ORDER_PLACED,
+    ORDER_CONFIRMED,
+    ORDER_REJECTED,
+    ORDER_SHIPPED,
+    DELIVERED,
+    CANCELLED,
+    RETURN_REQUESTED,
+    RETURN_APPROVED,
+    RETURN_REJECTED,
+    PICK_UP_INITIATED,
+    PICK_UP_COMPLETED,
+    REFUND_INITIATED,
+    REFUND_COMPLETED,
+    CLOSED
+}

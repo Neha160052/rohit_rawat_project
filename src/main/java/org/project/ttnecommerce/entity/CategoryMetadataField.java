@@ -1,4 +1,3 @@
-/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,6 +8,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "category_metadata_field")
@@ -18,8 +18,8 @@ public class CategoryMetadataField {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(nullable = false, unique = true)
     private String name;
 
-    @OneToMany(mappedBy = "field", cascade = CascadeType.ALL)
-    private Set<CategoryMetadataFieldValues> values = new HashSet<>();
-}*/
+    private Boolean isDeleted = false;
+}

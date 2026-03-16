@@ -3,6 +3,7 @@ package org.project.ttnecommerce.exception;
 import org.project.ttnecommerce.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,14 +19,24 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(PasswordMismatchException.class)
-    public ResponseEntity<ApiResponse> handlePasswordMismatch(PasswordMismatchException ex) {
-        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(GstAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse> handleGstExists(GstAlreadyExistsException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(CompanyAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse> handleCompanyExists(CompanyAlreadyExistsException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiResponse> handleUserNotFound(UserNotFoundException ex) {
         return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(PasswordMismatchException.class)
+    public ResponseEntity<ApiResponse> handlePasswordMismatch(PasswordMismatchException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AccountAlreadyActivatedException.class)
@@ -38,24 +49,9 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.FORBIDDEN);
     }
 
-    @ExceptionHandler(GstAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse> handleGstExists(GstAlreadyExistsException ex) {
-        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(CompanyAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse> handleCompanyExists(CompanyAlreadyExistsException ex) {
-        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(InvalidToken.class)
-    public ResponseEntity<ApiResponse> handleInvalidToken(InvalidToken ex) {
-        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(TokenRefreshException.class)
-    public ResponseEntity<ApiResponse> handleTokenRefresh(TokenRefreshException ex) {
-        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.UNAUTHORIZED);
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ApiResponse> handleAccountLocked(AccountLockedException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
@@ -63,9 +59,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(AccountLockedException.class)
-    public ResponseEntity<ApiResponse> handleAccountLocked(AccountLockedException ex) {
-        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.FORBIDDEN);
+    @ExceptionHandler(TokenRefreshException.class)
+    public ResponseEntity<ApiResponse> handleTokenRefresh(TokenRefreshException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse> handleResourceNotFound(ResourceNotFoundException ex) {
+        ApiResponse response = new ApiResponse(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(InvalidToken.class)
+    public ResponseEntity<ApiResponse> handleInvalidToken(InvalidToken ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(InvalidRequestException.class)
@@ -81,11 +88,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
 
-        if (ex.getRequiredType() == UUID.class) {
-            return new ResponseEntity<>(new ApiResponse("Invalid UUID format"), HttpStatus.BAD_REQUEST);
+        if (ex.getRequiredType() != null && ex.getRequiredType().equals(UUID.class)) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse("Invalid category id"));
         }
 
-        return new ResponseEntity<>(new ApiResponse("Invalid request parameter"), HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest()
+                .body(new ApiResponse("Invalid request parameter"));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -93,13 +102,41 @@ public class GlobalExceptionHandler {
 
         String message = ex.getBindingResult()
                 .getFieldErrors()
-                .get(0)
-                .getField() + ": " +
-                ex.getBindingResult()
-                        .getFieldErrors()
-                        .get(0)
-                        .getDefaultMessage();
+                .stream()
+                .findFirst()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .orElse("Validation failed");
 
         return new ResponseEntity<>(new ApiResponse(message), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse> handleJsonError(HttpMessageNotReadableException ex) {
+
+        String message = ex.getMostSpecificCause().getMessage();
+
+        if (message.contains("UUID")) {
+            return new ResponseEntity<>(
+                    new ApiResponse("Invalid UUID format"),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        return new ResponseEntity<>(
+                new ApiResponse("Malformed JSON request"),
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+
+
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse> handleUnexpectedError(Exception ex) {
+
+        return new ResponseEntity<>(
+                new ApiResponse("Something went wrong"),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
     }
 }

@@ -1,7 +1,7 @@
 package org.project.ttnecommerce.controller;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.project.ttnecommerce.dto.AdminCustomerResponse;
-import org.project.ttnecommerce.dto.AdminSellerResponse;
+import org.project.ttnecommerce.dto.*;
 import org.project.ttnecommerce.service.AdminService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -61,4 +61,63 @@ public class AdminController {
         String response = adminService.deactivateSeller(id);
         return ResponseEntity.ok(response);
     }
+
+
+    @PostMapping("/add-metadata-field")
+    public ResponseEntity<ApiResponse> addMetadataField(
+            @Valid @RequestBody AddMetadataFieldRequest request) {
+        String message = adminService.addMetadataField(request);
+        return ResponseEntity.ok(new ApiResponse(message));
+    }
+
+    @GetMapping("/get-metadata-field")
+    public ResponseEntity<List<MetadataFieldResponse>> getAllMetadataFields(
+            @RequestParam(required = false) Integer max,
+            @RequestParam(required = false) Integer offset,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String order,
+            @RequestParam(required = false) String query) {
+
+        List<MetadataFieldResponse> response = adminService.getAllMetadataFields(max, offset, sort, order, query);
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PostMapping("/add-category")
+    public ResponseEntity<ApiResponse> addCategory(@Valid @RequestBody AddCategoryRequest request) {
+        String message = adminService.addCategory(request);
+        return ResponseEntity.ok(new ApiResponse(message));
+    }
+
+    @GetMapping("/get-categories")
+    public ResponseEntity<List<CategoryResponse>> getAllCategories(
+            @RequestParam(defaultValue = "10") int max,
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "name") String sort,
+            @RequestParam(defaultValue = "asc") String order,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) UUID categoryId
+    ) {
+
+        List<CategoryResponse> response = adminService.getAllCategories(max, offset, sort, order, query, categoryId);
+        return ResponseEntity.ok(response);
+    }
+
+
+
+    @PutMapping("/update-category")
+    public ResponseEntity<ApiResponse> updateCategory(@RequestBody UpdateCategoryRequest request) {
+        String message = adminService.updateCategory(request);
+        return ResponseEntity.ok(new ApiResponse(message));
+    }
+
+
+    @PostMapping("/add-category/metadata")
+    public ResponseEntity<ApiResponse> addCategoryMetadata(@RequestBody AddCategoryMetadataRequest request) {
+        String message = adminService.addCategoryMetadata(request);
+        return ResponseEntity.ok(new ApiResponse(message));
+    }
+
+
+
 }

@@ -18,8 +18,8 @@ public class EmailService {
         String activationLink = "http://localhost:8080/api/customers/activate-customer?token=" + token;
         String subject = "Activate your account";
         String message = "Welcome!\n\n" +
-                        "Click the link below to activate your account:\n\n" + activationLink +
-                        "\n\nThis link will expire in 3 hours.";
+                "Click the link below to activate your account:\n\n" + activationLink +
+                "\n\nThis link will expire in 3 hours.";
         sendEmail(email, subject, message);
     }
 
@@ -29,9 +29,9 @@ public class EmailService {
         String resetLink = "http://localhost:8080/auth/reset-password?token=" + token;
         String subject = "Reset Your Password";
         String message = "We received a request to reset your password.\n\n" +
-                        "Click the link below to reset it:\n\n" +
-                        resetLink + "\n\nThis link will expire in 15 minutes.\n\n" +
-                        "If you did not request this, please ignore this email.";
+                "Click the link below to reset it:\n\n" +
+                resetLink + "\n\nThis link will expire in 15 minutes.\n\n" +
+                "If you did not request this, please ignore this email.";
         sendEmail(email, subject, message);
     }
 

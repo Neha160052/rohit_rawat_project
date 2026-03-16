@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -65,5 +66,12 @@ public class SellerController {
     public ResponseEntity<String> uploadProfileImage(@RequestParam("file") MultipartFile file) {
         sellerService.uploadProfileImage(file);
         return ResponseEntity.ok("Profile image uploaded successfully");
+    }
+
+
+    @GetMapping("/get-categories")
+    public ResponseEntity<List<SellerCategoryResponse>> getCategory() {
+        List<SellerCategoryResponse> response = sellerService.getCategory();
+        return ResponseEntity.ok(response);
     }
 }

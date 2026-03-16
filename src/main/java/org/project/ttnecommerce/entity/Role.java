@@ -11,24 +11,19 @@ import lombok.Setter;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-
+@Entity
+@Table(name = "roles")
 @Getter
 @Setter
-@Entity
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "roles")
 public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotBlank
     @Column(nullable = false, unique = true)
     private String authority;
 
-    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "role")
     private Set<UserRole> userRoles = new HashSet<>();
-
 }

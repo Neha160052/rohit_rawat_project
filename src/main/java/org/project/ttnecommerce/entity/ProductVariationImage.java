@@ -1,29 +1,25 @@
 package org.project.ttnecommerce.entity;
+
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class OrderProduct {
+public class ProductVariationImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    private Order order;
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_variation_id")
     private ProductVariation productVariation;
 
-    private Integer quantity;
+    private String imageName;
 
-    private Double price;
+    private Boolean isPrimary = false;
 }

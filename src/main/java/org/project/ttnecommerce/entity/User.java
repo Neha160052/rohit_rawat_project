@@ -8,16 +8,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+@Entity
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id"
-)
-@Entity
-@Table(name = "users")
 public class User {
 
     @Id
@@ -38,19 +34,11 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
     private Boolean isDeleted = false;
-
-    @Column(nullable = false)
     private Boolean isActive = false;
-
-    @Column(nullable = false)
     private Boolean isExpired = false;
-
-    @Column(nullable = false)
     private Boolean isLocked = false;
 
-    @Column(nullable = false)
     private Integer invalidAttemptCount = 0;
 
     private LocalDateTime passwordUpdateDate;
@@ -58,12 +46,12 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserRole> userRoles = new HashSet<>();
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Seller seller;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Customer customer;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user")
     private Set<Address> addresses = new HashSet<>();
 }

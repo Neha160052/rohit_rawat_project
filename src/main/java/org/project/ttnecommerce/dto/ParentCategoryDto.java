@@ -1,5 +1,4 @@
 package org.project.ttnecommerce.dto;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,12 +8,10 @@ import java.util.UUID;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class AdminCustomerResponse {
-
+@AllArgsConstructor
+public class ParentCategoryDto {
     private UUID id;
-    private String fullName;
-    private String email;
-    private Boolean isActive;
+    private String name;
+
 }
