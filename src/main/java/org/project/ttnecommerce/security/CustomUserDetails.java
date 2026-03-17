@@ -1,8 +1,10 @@
 package org.project.ttnecommerce.security;
+
 import org.project.ttnecommerce.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -14,7 +16,7 @@ public class CustomUserDetails implements UserDetails {
         this.user = user;
     }
 
-    public User getUser(){
+    public User getUser() {
         return user;
     }
 
@@ -25,7 +27,7 @@ public class CustomUserDetails implements UserDetails {
                 .stream()
                 .map(userRole ->
                         new SimpleGrantedAuthority(
-                                "ROLE_" + userRole.getRole().getAuthority()
+                                userRole.getRole().getAuthority()
                         )
                 )
                 .collect(Collectors.toSet());

@@ -1,6 +1,8 @@
 package org.project.ttnecommerce.config;
 import lombok.RequiredArgsConstructor;
 import org.project.ttnecommerce.security.JwtAuthenticationFilter;
+import org.project.ttnecommerce.security.handler.CustomAccessDeniedHandler;
+import org.project.ttnecommerce.security.handler.CustomAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +18,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -30,33 +34,33 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {
-
-        http.csrf(csrf -> csrf.disable())
+            throws Exception { http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/customer/login").permitAll()
-                        .requestMatchers("/auth/seller/login").permitAll()
-                        .requestMatchers("/auth/admin/login").permitAll()
-                        .requestMatchers("/auth/logout").permitAll()
-                        .requestMatchers("/auth/refresh").permitAll()
-                        .requestMatchers("/api/customers/register").permitAll()
-                        .requestMatchers("/api/customers/activate-customer").permitAll()
-                        .requestMatchers("/api/customers/resend-activation-link").permitAll()
-                        .requestMatchers("/api/forgot-password").permitAll()
-                        .requestMatchers("/api/reset-password").permitAll()
-                        .requestMatchers("/api/sellers/register").permitAll()
-                        .requestMatchers("/api/customers/**").hasRole("CUSTOMER")
-                        .requestMatchers("/api/sellers/**").hasRole("SELLER")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
                 )
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(
+                            "/auth/**",
+                            "/api/customers/register",
+                            "/api/sellers/register",
+                            "/api/customers/activate-customer",
+                            "/api/customers/resend-activation-link",
+                            "/api/forgot-password",
+                            "/api/reset-password",
+                            "/error"
+                    ).permitAll()
+                    .requestMatchers("/api/customers/**").hasRole("CUSTOMER")
+                    .requestMatchers("/api/sellers/**").hasRole("SELLER")
+                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                    .anyRequest().authenticated()
+            )
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }

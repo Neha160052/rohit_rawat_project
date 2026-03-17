@@ -27,25 +27,11 @@ public class AuthController {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
 
-    @PostMapping("/customer/login")
-    public ResponseEntity<LoginResponse> customerLogin(
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
             @RequestBody LoginRequest request,
             HttpServletResponse response) {
-        return ResponseEntity.ok(authService.login(request,"CUSTOMER",response));
-    }
-
-    @PostMapping("/seller/login")
-    public ResponseEntity<LoginResponse> sellerLogin(
-            @RequestBody LoginRequest request,
-            HttpServletResponse response) {
-        return ResponseEntity.ok(authService.login(request,"SELLER",response));
-    }
-
-    @PostMapping("/admin/login")
-    public ResponseEntity<LoginResponse> adminLogin(
-            @RequestBody LoginRequest request,
-            HttpServletResponse response) {
-        return ResponseEntity.ok(authService.login(request,"ADMIN",response));
+        return ResponseEntity.ok(authService.login(request, response));
     }
 
     @PostMapping("/refresh")

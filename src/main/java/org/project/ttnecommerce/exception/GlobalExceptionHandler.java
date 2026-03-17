@@ -3,94 +3,103 @@ package org.project.ttnecommerce.exception;
 import org.project.ttnecommerce.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.UUID;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<?> handleEmailExists(EmailAlreadyExistsException ex) {
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(Map.of(
-                        "error", ex.getMessage()
-                ));
-    }
-    @ExceptionHandler(PasswordMismatchException.class)
-    public ResponseEntity<?> handlePasswordMismatch(PasswordMismatchException e) {
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of(
-                        "error", e.getMessage()
-                ));
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse> handleEmailExists(EmailAlreadyExistsException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(PasswordMismatchException.class)
+    public ResponseEntity<ApiResponse> handlePasswordMismatch(PasswordMismatchException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ApiResponse> handleUserNotFound(UserNotFoundException e) {
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiResponse(e.getMessage()));
+    public ResponseEntity<ApiResponse> handleUserNotFound(UserNotFoundException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(AccountAlreadyActivatedException.class)
-    public ResponseEntity<ApiResponse> handleAccountAlreadyActivated(AccountAlreadyActivatedException e) {
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse(e.getMessage()));
-    }
-    @ExceptionHandler(GstAlreadyExistsException.class)
-    public ResponseEntity<?> handleGstExists(GstAlreadyExistsException e) {
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", e.getMessage()));
-    }
-
-    @ExceptionHandler(CompanyAlreadyExistsException.class)
-    public ResponseEntity<?> handleCompanyExists(CompanyAlreadyExistsException e) {
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", e.getMessage()));
+    public ResponseEntity<ApiResponse> handleAccountAlreadyActivated(AccountAlreadyActivatedException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AccountNotActivatedException.class)
-    public ResponseEntity<?> handleAccountNotActivated(AccountNotActivatedException e) {
-        return   ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", e.getMessage()));
+    public ResponseEntity<ApiResponse> handleAccountNotActivated(AccountNotActivatedException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.FORBIDDEN);
     }
+
+    @ExceptionHandler(GstAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse> handleGstExists(GstAlreadyExistsException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(CompanyAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse> handleCompanyExists(CompanyAlreadyExistsException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(InvalidToken.class)
-    public ResponseEntity<?> handleInvalidToken(InvalidToken invalidToken) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", invalidToken.getMessage()));
+    public ResponseEntity<ApiResponse> handleInvalidToken(InvalidToken ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
+
     @ExceptionHandler(TokenRefreshException.class)
-    public ResponseEntity<String> handleTokenRefreshException(TokenRefreshException ex) {
-
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(ex.getMessage());
+    public ResponseEntity<ApiResponse> handleTokenRefresh(TokenRefreshException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.UNAUTHORIZED);
     }
+
     @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<?> handleInvalidCredentials(InvalidCredentialsException ex) {
-
-        Map<String, Object> error = new HashMap<>();
-        error.put("message", ex.getMessage());
-
-        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<ApiResponse> handleInvalidCredentials(InvalidCredentialsException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.UNAUTHORIZED);
     }
+
     @ExceptionHandler(AccountLockedException.class)
-    public ResponseEntity<?> handleAccountLocked(AccountLockedException ex) {
+    public ResponseEntity<ApiResponse> handleAccountLocked(AccountLockedException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.FORBIDDEN);
+    }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", ex.getMessage());
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiResponse> handleInvalidRequest(InvalidRequestException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
+    }
 
-        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    @ExceptionHandler(InvalidInputException.class)
+    public ResponseEntity<ApiResponse> handleInvalidInput(InvalidInputException ex) {
+        return new ResponseEntity<>(new ApiResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+
+        if (ex.getRequiredType() == UUID.class) {
+            return new ResponseEntity<>(new ApiResponse("Invalid UUID format"), HttpStatus.BAD_REQUEST);
+        }
+
+        return new ResponseEntity<>(new ApiResponse("Invalid request parameter"), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
+
+        String message = ex.getBindingResult()
+                .getFieldErrors()
+                .get(0)
+                .getField() + ": " +
+                ex.getBindingResult()
+                        .getFieldErrors()
+                        .get(0)
+                        .getDefaultMessage();
+
+        return new ResponseEntity<>(new ApiResponse(message), HttpStatus.BAD_REQUEST);
     }
 }
