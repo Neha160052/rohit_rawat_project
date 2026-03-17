@@ -9,16 +9,20 @@ import java.util.UUID;
 
 @Component("auditorProvider")
 public class AuditorAwareImpl implements AuditorAware<UUID> {
+    private static final UUID SYSTEM_UUID =
+            UUID.fromString("00000000-0000-0000-0000-000000000000");
+
     @Override
     public Optional<UUID> getCurrentAuditor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return Optional.empty();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            return Optional.of(SYSTEM_UUID);
         }
         Object principal = authentication.getPrincipal();
         if (principal instanceof CustomUserDetails userDetails) {
             return Optional.of(userDetails.getUser().getId());
         }
-        return Optional.empty();
+        return Optional.of(SYSTEM_UUID);
     }
 }

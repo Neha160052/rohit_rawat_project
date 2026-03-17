@@ -93,9 +93,7 @@ public class AuthService {
 
     @Transactional
     public void logout(String refreshToken, String accessToken) {
-
         log.info("Logout request received");
-
         RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
                         .orElseThrow(() -> {
                             log.warn("Logout failed - refresh token not found");

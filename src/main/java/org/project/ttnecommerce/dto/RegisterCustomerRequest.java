@@ -1,5 +1,4 @@
 package org.project.ttnecommerce.dto;
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -20,17 +19,19 @@ public class RegisterCustomerRequest {
     private String phone;
 
     @NotBlank
-    @Size(min = 8)
+    @Size(min = 8, max = 15)
+    @Pattern(
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,15}$",
+            message = "Password must be 8-20 chars with uppercase, lowercase, digit and special character"
+    )
     private String password;
 
     @NotBlank
     private String confirmPassword;
 
-    @NotBlank
-    @Size(min = 2, max = 50)
+    @Pattern(regexp = "^[A-Za-z]+$", message = "First name should contain only alphabets")
     private String firstName;
 
-    @NotBlank
-    @Size(min = 2, max = 50)
+    @Pattern(regexp = "^[A-Za-z]+$", message = "Last name should contain only alphabets")
     private String lastName;
 }

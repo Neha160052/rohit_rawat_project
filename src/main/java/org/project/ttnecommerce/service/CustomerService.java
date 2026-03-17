@@ -83,9 +83,8 @@ public class CustomerService {
         activationToken.setToken(token);
         activationToken.setUser(user);
         activationToken.setExpiryDate(LocalDateTime.now().plusHours(3));
-
         activationTokenRepository.save(activationToken);
-
+        log.info("EMAIL METHOD CALLED");
         emailService.sendActivationEmail(user.getEmail(), token);
         log.info("Customer registered successfully | email={}", user.getEmail());
     }

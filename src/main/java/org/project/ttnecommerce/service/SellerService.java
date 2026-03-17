@@ -293,9 +293,7 @@ public class SellerService {
     // get category method
     @Transactional
     public List<SellerCategoryResponse> getCategory() {
-
         List<Category> allCategories = categoryRepository.findByIsDeletedFalse();
-
         if (allCategories.isEmpty()) {
             throw new ResourceNotFoundException("No categories found");
         }
@@ -307,16 +305,12 @@ public class SellerService {
                 continue;
             }
 
-            List<CategoryMetadataFieldValues> categoryMetadataValues =
-                    categoryMetadataFieldValuesRepository.findByCategory(category);
+            List<CategoryMetadataFieldValues> categoryMetadataValues = categoryMetadataFieldValuesRepository.findByCategory(category);
 
             Map<UUID, MetadataFieldWithValuesResponse> metadataMap = new LinkedHashMap<>();
-
             for (CategoryMetadataFieldValues metadata : categoryMetadataValues) {
-
                 UUID fieldId = metadata.getMetadataField().getId();
                 String fieldName = metadata.getMetadataField().getName();
-
                 List<String> values = Arrays.stream(metadata.getValue().split(","))
                         .map(String::trim)
                         .collect(Collectors.toList());
@@ -439,8 +433,7 @@ public class SellerService {
         if (!file.getContentType().startsWith("image/")) {
             throw new InvalidRequestException("Only image files are allowed");
         }
-        CustomUserDetails userDetails =
-                (CustomUserDetails) SecurityContextHolder
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder
                         .getContext()
                         .getAuthentication()
                         .getPrincipal();

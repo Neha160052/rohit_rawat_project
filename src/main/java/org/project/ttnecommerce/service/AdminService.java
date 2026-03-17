@@ -346,31 +346,37 @@ public class AdminService {
     // update Category method
     @Transactional
     public String updateCategory(UpdateCategoryRequest request){
-        UUID id = request.getId();
-        String name = request.getName().trim();
-
-        if(id==null)
+        if(request.getId() == null)
             throw new InvalidInputException("Category id cannot be null");
+
+        if(request.getName() == null)
+            throw new InvalidInputException("Category name cannot be null");
+
+        String name = request.getName().trim();
 
         if(name.isEmpty())
             throw new InvalidInputException("Category name cannot be empty");
 
-        Category category = categoryRepository.findByIdAndIsDeletedFalse(id)
+        Category category = categoryRepository.findByIdAndIsDeletedFalse(request.getId())
                 .orElseThrow(() -> new InvalidRequestException("Category not found"));
 
+        if(category.getName().equalsIgnoreCase(name)){
+            return "No changes detected";
+        }
+
         Category parent = category.getParentCategory();
-        if(parent==null){
+
+        if(parent == null){
             categoryRepository.findByNameIgnoreCaseAndParentCategoryIsNullAndIsDeletedFalse(name)
                     .ifPresent(existing -> {
-                        if(!existing.getId().equals(id)){
+                        if(!existing.getId().equals(category.getId())){
                             throw new InvalidRequestException("Root category already exists");
                         }
                     });
-        }
-        else {
-            categoryRepository.findByNameIgnoreCaseAndParentCategoryIdAndIsDeletedFalse(name,parent.getId())
+        } else {
+            categoryRepository.findByNameIgnoreCaseAndParentCategoryIdAndIsDeletedFalse(name, parent.getId())
                     .ifPresent(existing -> {
-                        if(!existing.getId().equals(id)){
+                        if(!existing.getId().equals(category.getId())){
                             throw new InvalidRequestException("Category already exists under this parent");
                         }
                     });

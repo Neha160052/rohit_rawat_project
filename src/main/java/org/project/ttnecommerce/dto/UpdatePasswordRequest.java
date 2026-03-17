@@ -1,8 +1,5 @@
 package org.project.ttnecommerce.dto;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Getter
@@ -13,13 +10,14 @@ import lombok.*;
 public class UpdatePasswordRequest {
 
     @NotBlank(message = "Current password is required")
+    @Size(min = 8, max = 15, message = "Password must be between 8 and 15 characters")
     private String currentPassword;
 
     @NotBlank(message = "New password is required")
-    @Size( max = 15, message = "Password must be between 8 and 15 characters")
+    @Size(min = 8, max = 15, message = "Password must be between 8 and 15 characters")
     @Pattern(
-            regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!]).*$",
-            message = "Password must contain at least one uppercase, one lowercase, one number and one special character"
+            regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!])[A-Za-z\\d@#$%^&+=!]+$",
+            message = "Password must contain uppercase, lowercase, digit and special character"
     )
     private String newPassword;
 

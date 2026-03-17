@@ -34,12 +34,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = null;
         String username = null;
 
-        // Step 1: Authorization header check
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
             token = authHeader.substring(7);
 
-            // Step 2: blacklist check
             if (blacklistedTokenRepository.existsByToken(token)) {
 
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -63,7 +61,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        // Step 3: authenticate user if not already authenticated
         if (username != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
 
