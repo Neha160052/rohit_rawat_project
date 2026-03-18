@@ -24,5 +24,7 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     List<Category> findByParentCategoryAndIsDeletedFalse(Category parent);
 
+    boolean existsByParentCategoryAndIsDeletedFalse(Category category);
+
 
 }

@@ -14,5 +14,4 @@ public class AddCategoryMetadataRequest {
     private UUID categoryId;
     private List<MetadataFieldValuesRequest> metadata;
 
-
 }

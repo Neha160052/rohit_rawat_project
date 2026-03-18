@@ -1,6 +1,7 @@
 package org.project.ttnecommerce.repository;
 
 import org.project.ttnecommerce.entity.Category;
+import org.project.ttnecommerce.entity.Product;
 import org.project.ttnecommerce.entity.ProductVariation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,4 +22,8 @@ AND p.isDeleted = false
 AND p.isActive = true
 """)
     List<Object[]> findMinMaxPrice(@Param("categoryIds") List<UUID> categoryIds);
+
+
+
+    List<ProductVariation> findByProductAndIsDeletedFalse(Product product);
 }

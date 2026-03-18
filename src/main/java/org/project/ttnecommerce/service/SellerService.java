@@ -6,11 +6,13 @@ import org.project.ttnecommerce.entity.*;
 import org.project.ttnecommerce.exception.*;
 import org.project.ttnecommerce.repository.*;
 import org.project.ttnecommerce.security.CustomUserDetails;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.core.Authentication;
+import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
@@ -29,6 +31,9 @@ public class SellerService {
     private final CategoryRepository categoryRepository;
     private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
     private final ProductRepository productRepository;
+    private final ProductVariationRepository productVariationRepository;
+    private final FileStorageService fileStorageService;
+    private final ProductVariationImageRepository productVariationImageRepository;
 
     private static final String BASE_PATH = "uploads/users/";
 
@@ -351,12 +356,20 @@ public class SellerService {
     @Transactional
     public String addProduct(AddProductRequest request) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
         User seller = userDetails.getUser();
 
-        String name = request.getName().trim();
-        String brand = request.getBrand().trim();
+        if (!seller.getIsActive() || seller.getIsDeleted()) {
+            throw new InvalidRequestException("Seller account is not active");
+        }
+
+        if (seller.getSeller() == null || !seller.getSeller().getIsApproved()) {
+            throw new InvalidRequestException("Seller is not approved");
+        }
+
+        String name = request.getName().trim().toLowerCase();
+        String brand = request.getBrand().trim().toLowerCase();
 
         if (name.isEmpty()) {
             throw new InvalidInputException("Product name cannot be empty");
@@ -369,52 +382,206 @@ public class SellerService {
         Category category = categoryRepository.findByIdAndIsDeletedFalse(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
-        List<Category> children = categoryRepository.findByParentCategoryAndIsDeletedFalse(category);
-
-        if (!children.isEmpty()) {
+        if (categoryRepository.existsByParentCategoryAndIsDeletedFalse(category)) {
             throw new InvalidRequestException("Product can only be added to leaf category");
         }
 
-        boolean exists = productRepository.existsBySellerIdAndNameIgnoreCaseAndBrandIgnoreCaseAndCategoryIdAndIsDeletedFalse(seller.getId(),
-                        name,
-                        brand,
-                        category.getId()
-                );
+        boolean exists = productRepository.existsBySellerIdAndNameAndBrandAndCategoryIdAndIsDeletedFalse(seller.getId(), name, brand, category.getId());
 
         if (exists) {
-            throw new InvalidRequestException(
-                    "Product already exists with same name, brand and category"
-            );
+            throw new InvalidRequestException("Product already exists");
         }
 
-        Boolean isCancellable = Boolean.TRUE.equals(request.getIsCancellable());
-        Boolean isReturnable = Boolean.TRUE.equals(request.getIsReturnable());
+        String description = request.getDescription();
+        if (description != null && description.length() > 500) {
+            throw new InvalidRequestException("Description too long");
+        }
 
         Product product = new Product();
         product.setSeller(seller);
         product.setName(name);
         product.setBrand(brand);
-        product.setDescription(request.getDescription());
+        product.setDescription(description);
         product.setCategory(category);
-        product.setIsCancellable(isCancellable);
-        product.setIsReturnable(isReturnable);
-
+        product.setIsCancellable(Boolean.TRUE.equals(request.getIsCancellable()));
+        product.setIsReturnable(Boolean.TRUE.equals(request.getIsReturnable()));
         product.setIsActive(false);
         product.setIsDeleted(false);
+        try {
+            productRepository.save(product);
+        } catch (DataIntegrityViolationException ex) {
+            throw new InvalidRequestException("Duplicate product detected");
+        }
 
-        productRepository.save(product);
+        try {
+            emailService.sendEmail(
+                    "admin@ecommerce.com",
+                    "New Product Added",
+                    "Seller " + seller.getEmail() +
+                            " added product: " + name +
+                            " (Brand: " + brand + ") awaiting approval."
+            );
+        } catch (Exception e) {
+        }
 
-        emailService.sendEmail("admin@ecommerce.com", "New Product Added", "Seller " + seller.getEmail() +
-                        " added product: " + name +
-                        " (Brand: " + brand + ") awaiting approval."
-        );
         return "Product created successfully and is inactive until admin approval";
     }
 
+    // add Product Variation method
+    @Transactional
+    public String addProductVariation(AddProductVariationRequest request) {
+
+        CustomUserDetails userDetails =
+                (CustomUserDetails) SecurityContextHolder.getContext()
+                        .getAuthentication().getPrincipal();
+
+        User seller = userDetails.getUser();
 
 
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
+        if (product.getIsDeleted())
+            throw new InvalidRequestException("Product is deleted");
 
+        if (!product.getIsActive())
+            throw new InvalidRequestException("Product is not active");
+
+        if (!product.getSeller().getId().equals(seller.getId()))
+            throw new InvalidRequestException("Unauthorized access to product");
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        Map<String, String> metadataMap;
+
+        try {
+            metadataMap = mapper.readValue(request.getMetadata(), Map.class);
+        }
+        catch (Exception e) {
+            throw new InvalidRequestException("Invalid metadata format");
+        }
+
+        if (metadataMap == null || metadataMap.isEmpty())
+            throw new InvalidRequestException("Metadata cannot be empty");
+
+        Map<String, String> normalizedMetadata = new HashMap<>();
+
+        for (Map.Entry<String, String> entry : metadataMap.entrySet()) {
+
+            String key = entry.getKey().toLowerCase().trim();
+            String value = entry.getValue().toLowerCase().trim();
+
+            if (key.isEmpty() || value.isEmpty())
+                throw new InvalidRequestException("Invalid metadata");
+
+            normalizedMetadata.put(key, value);
+        }
+
+        metadataMap = normalizedMetadata;
+
+        List<CategoryMetadataFieldValues> allowed =
+                categoryMetadataFieldValuesRepository.findByCategory(product.getCategory());
+
+        Map<String, Set<String>> validMap = new HashMap<>();
+
+        for (CategoryMetadataFieldValues field : allowed) {
+            validMap
+                    .computeIfAbsent(field.getMetadataField().getName().toLowerCase(), k -> new HashSet<>())
+                    .add(field.getValue().toLowerCase());
+        }
+
+        for (Map.Entry<String, String> entry : metadataMap.entrySet()) {
+
+            if (!validMap.containsKey(entry.getKey()))
+                throw new InvalidRequestException("Invalid metadata field: " + entry.getKey());
+
+            if (!validMap.get(entry.getKey()).contains(entry.getValue()))
+                throw new InvalidRequestException("Invalid metadata value for " + entry.getKey());
+        }
+
+        List<ProductVariation> existing =
+                productVariationRepository.findByProductAndIsDeletedFalse(product);
+
+        if (!existing.isEmpty()) {
+            try {
+                Map<String, String> existingMeta =
+                        mapper.readValue(existing.get(0).getMetadata(), Map.class);
+
+                if (!existingMeta.keySet().equals(metadataMap.keySet()))
+                    throw new InvalidRequestException("All variations must have same metadata structure");
+
+            }
+            catch (Exception e) {
+                throw new InvalidRequestException("Metadata structure validation failed");
+            }
+        }
+
+        for (ProductVariation pv : existing) {
+            try {
+                Map<String, String> existingMeta =
+                        mapper.readValue(pv.getMetadata(), Map.class);
+
+                if (existingMeta.equals(metadataMap))
+                    throw new InvalidRequestException("Duplicate variation exists");
+
+            } catch (Exception e) {
+                throw new InvalidRequestException("Metadata comparison failed");
+            }
+        }
+
+        ProductVariation variation = new ProductVariation();
+        variation.setProduct(product);
+        variation.setQuantityAvailable(request.getQuantityAvailable());
+        variation.setPrice(request.getPrice());
+        variation.setIsActive(true);
+        variation.setIsDeleted(false);
+
+        productVariationRepository.save(variation);
+
+        String primaryImageName = fileStorageService.storeProductVariationImage(
+                request.getPrimaryImage(),
+                product.getId(),
+                variation.getId(),
+                true,
+                0
+        );
+
+        variation.setPrimaryImageName(primaryImageName);
+
+        try {
+            variation.setMetadata(mapper.writeValueAsString(metadataMap));
+        }
+        catch (Exception e) {
+            throw new InvalidRequestException("Metadata processing failed");
+        }
+
+        productVariationRepository.save(variation);
+
+        if (request.getSecondaryImages() != null) {
+
+            int index = 1;
+
+            for (MultipartFile file : request.getSecondaryImages()) {
+
+                String fileName = fileStorageService.storeProductVariationImage(
+                        file,
+                        product.getId(),
+                        variation.getId(),
+                        false,
+                        index++
+                );
+
+                ProductVariationImage img = new ProductVariationImage();
+                img.setProductVariation(variation);
+                img.setImageName(fileName);
+                img.setIsPrimary(false);
+
+                productVariationImageRepository.save(img);
+            }
+        }
+
+        return "Product variation created successfully";
+    }
 
 
 

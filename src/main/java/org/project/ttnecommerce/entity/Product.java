@@ -4,7 +4,6 @@ import lombok.*;
 import org.project.ttnecommerce.entity.base.Auditable;
 import java.util.UUID;
 
-
 @Entity
 @Table(
         uniqueConstraints = @UniqueConstraint(
@@ -38,4 +37,7 @@ public class Product extends Auditable {
 
     private Boolean isActive = false;
     private Boolean isDeleted = false;
+
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    private java.util.List<ProductVariation> variations = new java.util.ArrayList<>();
 }

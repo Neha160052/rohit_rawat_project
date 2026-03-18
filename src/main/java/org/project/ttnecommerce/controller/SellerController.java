@@ -70,14 +70,17 @@ public class SellerController {
     }
 
     @PostMapping("/add-products")
-    public ResponseEntity<String> addProduct(
-            @Valid @RequestBody AddProductRequest request
-    ) {
+    public ResponseEntity<String> addProduct(@Valid @RequestBody AddProductRequest request) {
         String response = sellerService.addProduct(request);
         return ResponseEntity.ok(response);
     }
 
 
+    @PostMapping(value = "/add-product-variation", consumes = "multipart/form-data")
+    public ResponseEntity<String> addProductVariation(@ModelAttribute @Valid AddProductVariationRequest request) {
+        String response = sellerService.addProductVariation(request);
+        return ResponseEntity.ok(response);
+    }
 
 
 }

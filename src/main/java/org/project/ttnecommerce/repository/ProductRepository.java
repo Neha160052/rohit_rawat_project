@@ -1,14 +1,15 @@
 package org.project.ttnecommerce.repository;
-
 import org.project.ttnecommerce.entity.Category;
 import org.project.ttnecommerce.entity.Product;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.domain.Specification;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-public interface ProductRepository extends JpaRepository<Product, UUID> {
+public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpecificationExecutor<Product> {
 
     @Query("""
         SELECT DISTINCT p.brand
@@ -20,5 +21,21 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     List<String> findDistinctBrands(List<Category> categories);
 
     boolean existsByCategoryAndIsDeletedFalse(Category category);
-    boolean existsBySellerIdAndNameIgnoreCaseAndBrandIgnoreCaseAndCategoryIdAndIsDeletedFalse(UUID sellerId, String name, String brand, UUID categoryId);
+
+    boolean existsBySellerIdAndNameAndBrandAndCategoryIdAndIsDeletedFalse(
+            UUID sellerId,
+            String name,
+            String brand,
+            UUID categoryId
+    );
+
+    @Override
+    @EntityGraph(attributePaths = {"category", "variations"})
+    Page<Product> findAll(Specification<Product> spec, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"category", "variations"})
+    Optional<Product> findByIdAndIsDeletedFalseAndIsActiveTrue(UUID id);
+
+    @EntityGraph(attributePaths = {"seller"})
+    Optional<Product> findByIdAndIsDeletedFalse(UUID id);
 }

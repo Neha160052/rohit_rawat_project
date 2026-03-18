@@ -1,10 +1,13 @@
 package org.project.ttnecommerce.service;
 import lombok.RequiredArgsConstructor;
+import org.project.ttnecommerce.Enum.ProductAction;
 import org.project.ttnecommerce.dto.*;
 import org.project.ttnecommerce.entity.*;
 import org.project.ttnecommerce.exception.InvalidInputException;
 import org.project.ttnecommerce.exception.InvalidRequestException;
+import org.project.ttnecommerce.exception.ResourceNotFoundException;
 import org.project.ttnecommerce.repository.*;
+import org.project.ttnecommerce.specification.ProductSpecification;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -183,17 +186,20 @@ public class AdminService {
 
         if(max==null || max<=0) max=10;
         if(offset==null || offset<0) offset=0;
-        if(sort==null) sort="name";
+        if(sort==null) sort="id";
 
         Sort.Direction direction = "desc".equalsIgnoreCase(order)?Sort.Direction.DESC:Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(offset,max,Sort.by(direction,sort));
+
         Page<CategoryMetadataField> fields;
 
         if(query!=null && !query.trim().isEmpty()){
             fields = metadataRepository.findByNameContainingIgnoreCaseAndIsDeletedFalse(query.trim(),pageable);
-        }else{
+        }
+        else{
             fields = metadataRepository.findByIsDeletedFalse(pageable);
         }
+
         return fields.stream()
                 .map(field -> new MetadataFieldResponse(field.getId(),field.getName()))
                 .toList();
@@ -205,8 +211,8 @@ public class AdminService {
     public String addCategory(AddCategoryRequest request){
         String name = request.getName().trim();
 
-        if(name.isEmpty())
-            throw new InvalidInputException("Category name cannot be empty");
+        /*if(name.isEmpty())
+            throw new InvalidInputException("Category name cannot be empty");*/
 
         Category parent = null;
 
@@ -251,7 +257,6 @@ public class AdminService {
 
 
     // get All Category
-
     public List<CategoryResponse> getAllCategories(int max,int offset,String sort,String order,String query,UUID categoryId){
         if(max<=0 || max>100)
             throw new InvalidInputException("max must be between 1 and 100");
@@ -453,6 +458,186 @@ public class AdminService {
         }
         return "Metadata fields added successfully";
     }
+
+
+    // getAll product method
+    public List<ProductResponse> getAllProducts(ProductFilterRequest request) {
+
+        validateRequest(request);
+
+        if (request.getProductId() != null) {
+            Product product = productRepository.findByIdAndIsDeletedFalseAndIsActiveTrue(request.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+            return List.of(mapToResponse(product));
+        }
+
+        Pageable pageable = buildPageable(request);
+
+        Page<Product> page = productRepository.findAll(ProductSpecification.filterProducts(request), pageable);
+
+        return page.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    public ProductResponse mapToResponse(Product product) {
+
+        CategoryDto categoryDto = null;
+
+        if (product.getCategory() != null) {
+            categoryDto = CategoryDto.builder()
+                    .id(product.getCategory().getId())
+                    .name(product.getCategory().getName())
+                    .build();
+        }
+
+        List<VariationResponse> variations = Optional.ofNullable(product.getVariations())
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(v -> Boolean.FALSE.equals(v.getIsDeleted()) &&
+                        Boolean.TRUE.equals(v.getIsActive()))
+                .map(v -> VariationResponse.builder()
+                        .id(v.getId())
+                        .price(v.getPrice())
+                        .quantity(v.getQuantityAvailable())
+                        .primaryImage(v.getPrimaryImageName())
+                        .build())
+                .toList();
+
+        return ProductResponse.builder()
+                .productId(product.getId())
+                .name(product.getName())
+                .brand(product.getBrand())
+                .description(product.getDescription())
+                .category(categoryDto)
+                .variations(variations)
+                .build();
+    }
+
+
+
+    private void validateRequest(ProductFilterRequest request) {
+
+        if (request == null) {
+            throw new InvalidRequestException("Request cannot be null");
+        }
+
+        if (request.getMax() == null || request.getMax() <= 0 || request.getMax() > 100) {
+            throw new InvalidRequestException("Max must be between 1 and 100");
+        }
+
+        if (request.getOffset() == null || request.getOffset() < 0) {
+            throw new InvalidRequestException("Offset cannot be negative");
+        }
+
+        List<String> allowedSort = List.of("id", "name", "brand");
+
+        if (request.getSort() == null || !allowedSort.contains(request.getSort())) {
+            throw new InvalidRequestException("Invalid sort field");
+        }
+
+        if (request.getOrder() == null ||
+                (!request.getOrder().equalsIgnoreCase("asc") &&
+                        !request.getOrder().equalsIgnoreCase("desc"))) {
+            throw new InvalidRequestException("Order must be asc or desc");
+        }
+
+        if (request.getProductId() != null) {
+
+            if (request.getSellerId() != null || request.getCategoryId() != null) {
+                throw new InvalidRequestException(
+                        "When productId is provided, sellerId and categoryId must not be used"
+                );
+            }
+            // future safe (you can expand later)
+        }
+
+        if (request.getSellerId() != null) {
+            boolean exists = userRepository.existsById(request.getSellerId());
+            if (!exists) {
+                throw new InvalidRequestException("Seller not found");
+            }
+        }
+
+        if (request.getCategoryId() != null) {
+            boolean exists = categoryRepository.existsById(request.getCategoryId());
+            if (!exists) {
+                throw new InvalidRequestException("Category not found");
+            }
+        }
+    }
+
+    private Pageable buildPageable(ProductFilterRequest request) {
+
+        Sort.Direction direction = request.getOrder().equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        String sortField = mapSortField(request.getSort());
+
+        return PageRequest.of(request.getOffset(), request.getMax(), Sort.by(direction, sortField)
+        );
+    }
+
+    private String mapSortField(String sort) {
+        return switch (sort) {
+            case "id" -> "id";
+            case "name" -> "name";
+            case "brand" -> "brand";
+            default -> throw new InvalidRequestException("Invalid sort field");
+        };
+    }
+
+
+
+    // update product status method
+    @Transactional
+    public String updateProductStatus(ProductStatusUpdateRequest request) {
+
+        if (request.getProductId() == null) {
+            throw new InvalidRequestException("Product ID cannot be null");
+        }
+
+        Product product = productRepository.findByIdAndIsDeletedFalse(request.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        if (product.getIsDeleted()) {
+            throw new InvalidRequestException("Product is deleted");
+        }
+
+        ProductAction action = request.getAction();
+
+        switch (action) {
+            case ACTIVATE -> {
+
+                if (product.getIsActive()) {
+                    throw new InvalidRequestException("Product should be inactive");
+                }
+
+                product.setIsActive(true);
+
+                emailService.sendProductActivationEmail(product);
+
+                return "Product activated successfully";
+            }
+
+            case DEACTIVATE -> {
+
+                if (!product.getIsActive()) {
+                    throw new InvalidRequestException("Product should be active");
+                }
+
+                product.setIsActive(false);
+
+                emailService.sendProductDeactivationEmail(product);
+
+                return "Product deactivated successfully";
+            }
+            default -> throw new InvalidRequestException("Invalid action");
+        }
+    }
+
+
+
 
 
     private void validatePagination(int pageOffset,int pageSize){

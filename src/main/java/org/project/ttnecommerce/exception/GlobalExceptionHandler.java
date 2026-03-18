@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -122,22 +123,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(new ApiResponse("Invalid request parameter"));
     }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
 
-        String message = ex.getBindingResult()
+        List<String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .findFirst()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .orElse("Validation failed");
+                .toList();
 
-        log.warn("Validation failed: {}", message);
+        log.warn("Validation failed: {}", errors);
 
-        return new ResponseEntity<>(new ApiResponse(message), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(
+                new ApiResponse("Invalid request data", errors),
+                HttpStatus.BAD_REQUEST
+        );
     }
-
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse> handleJsonError(HttpMessageNotReadableException ex) {
 

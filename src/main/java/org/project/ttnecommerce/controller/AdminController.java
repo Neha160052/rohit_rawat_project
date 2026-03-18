@@ -134,5 +134,15 @@ public class AdminController {
         String message = adminService.addCategoryMetadata(request);
         return ResponseEntity.ok(new ApiResponse(message));
     }
+
+    @GetMapping("/get-products")
+    public ResponseEntity<List<ProductResponse>> getProducts(@Valid ProductFilterRequest request) {
+        return ResponseEntity.ok(adminService.getAllProducts(request));
+    }
+
+    @PutMapping("/product-status")
+    public ResponseEntity<String> updateProductStatus(@Valid @RequestBody ProductStatusUpdateRequest request) {
+        return ResponseEntity.ok(adminService.updateProductStatus(request));
+    }
 }
 

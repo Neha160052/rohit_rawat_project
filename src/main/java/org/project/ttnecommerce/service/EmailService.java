@@ -2,6 +2,7 @@ package org.project.ttnecommerce.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.project.ttnecommerce.entity.Product;
 import org.project.ttnecommerce.entity.User;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -83,8 +84,6 @@ public class EmailService {
         );
     }
 
-    // 🔴 IMPORTANT: NOT async
-    // Centralized email sender with logging + error handling
     public void sendEmail(String email, String subject, String text) {
         try {
             log.info("Sending email to: {}", email);
@@ -110,4 +109,63 @@ public class EmailService {
                 "Hello " + user.getFirstName() + ",\n\nYour account has been successfully activated by the admin."
         );
     }
+
+
+    @Async
+    public void sendProductActivationEmail(Product product) {
+
+        if (product == null || product.getSeller() == null) {
+            return;
+        }
+
+        User seller = product.getSeller();
+
+        if (seller.getEmail() == null) {
+            return;
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setTo(seller.getEmail());
+        message.setSubject("Product Activated");
+
+        message.setText(
+                "Hello " + seller.getFirstName() + ",\n\n" +
+                        "Your product \"" + product.getName() + "\" has been ACTIVATED by admin.\n\n" +
+                        "It is now visible to customers.\n\n" +
+                        "Regards,\nEcommerce Team"
+        );
+
+        mailSender.send(message);
+    }
+
+    @Async
+    public void sendProductDeactivationEmail(Product product) {
+
+        if (product == null || product.getSeller() == null) {
+            return;
+        }
+
+        User seller = product.getSeller();
+
+        if (seller.getEmail() == null) {
+            return;
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+
+        message.setTo(seller.getEmail());
+        message.setSubject("Product Deactivated");
+
+        message.setText(
+                "Hello " + seller.getFirstName() + ",\n\n" +
+                        "Your product \"" + product.getName() + "\" has been DEACTIVATED by admin.\n\n" +
+                        "It is no longer visible to customers.\n\n" +
+                        "Regards,\nEcommerce Team"
+        );
+
+        mailSender.send(message);
+    }
+
+
 }
