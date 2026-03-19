@@ -933,20 +933,17 @@ public class SellerService {
 
         Product product = variation.getProduct();
 
-        // ✔ ownership check
         productRepository.findByIdAndSellerIdAndIsDeletedFalse(
                 product.getId(),
                 user.getSeller().getId()
         ).orElseThrow(() -> new AccessDeniedException("You do not own this product"));
 
-        // ✔ product active check
         if (!product.getIsActive()) {
             throw new InvalidRequestException("Product is not active");
         }
 
         boolean updated = false;
 
-        // ================= PRICE =================
         if (request.getPrice() != null) {
             if (request.getPrice().equals(variation.getPrice())) {
                 throw new InvalidRequestException("Price is same as existing");
@@ -955,7 +952,6 @@ public class SellerService {
             updated = true;
         }
 
-        // ================= QUANTITY =================
         if (request.getQuantity() != null) {
             if (request.getQuantity().equals(variation.getQuantityAvailable())) {
                 throw new InvalidRequestException("Quantity is same as existing");
@@ -964,7 +960,6 @@ public class SellerService {
             updated = true;
         }
 
-        // ================= ACTIVE =================
         if (request.getIsActive() != null) {
             if (request.getIsActive().equals(variation.getIsActive())) {
                 throw new InvalidRequestException("Active flag unchanged");
@@ -973,7 +968,6 @@ public class SellerService {
             updated = true;
         }
 
-        // ================= METADATA =================
         if (request.getMetadata() != null) {
 
             String normalizedMetadata = validateAndNormalizeMetadata(
@@ -997,7 +991,6 @@ public class SellerService {
             updated = true;
         }
 
-        // ================= PRIMARY IMAGE =================
         if (request.getPrimaryImage() != null && !request.getPrimaryImage().isEmpty()) {
 
             String fileName = fileStorageService.storeProductVariationImage(
@@ -1012,10 +1005,8 @@ public class SellerService {
             updated = true;
         }
 
-        // ================= SECONDARY IMAGES =================
         if (request.getSecondaryImages() != null && !request.getSecondaryImages().isEmpty()) {
 
-            // clear old DB records
             if (variation.getImages() != null) {
                 variation.getImages().clear();
             }
@@ -1043,7 +1034,6 @@ public class SellerService {
             updated = true;
         }
 
-        // ================= FINAL CHECK =================
         if (!updated) {
             throw new InvalidRequestException("No changes detected");
         }

@@ -6482,3 +6482,99 @@ Caused by: java.lang.ClassNotFoundException: org.project.ttnecommerce.service.Se
 2026-03-19T17:02:48.912+05:30 DEBUG 33620 --- [TTN-EcommerceProject] [restartedMain] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, LogoutFilter, JwtAuthenticationFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
 2026-03-19T17:02:49.229+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
 2026-03-19T17:02:49.235+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.p.t.TtnEcommerceProjectApplication     : Started TtnEcommerceProjectApplication in 6.36 seconds (process running for 7.207)
+2026-03-19T17:54:50.018+05:30  INFO 33620 --- [TTN-EcommerceProject] [File Watcher] rtingClassPathChangeChangedEventListener : Restarting due to 1 class path change (0 additions, 1 deletion, 0 modifications)
+2026-03-19T17:54:50.023+05:30  INFO 33620 --- [TTN-EcommerceProject] [Thread-1] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-03-19T17:54:50.026+05:30  INFO 33620 --- [TTN-EcommerceProject] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-03-19T17:54:50.033+05:30  INFO 33620 --- [TTN-EcommerceProject] [Thread-1] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-19T17:54:50.037+05:30  INFO 33620 --- [TTN-EcommerceProject] [Thread-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-19T17:54:50.044+05:30  INFO 33620 --- [TTN-EcommerceProject] [Thread-1] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-03-19T17:54:50.154+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.p.t.TtnEcommerceProjectApplication     : Starting TtnEcommerceProjectApplication using Java 21.0.10 with PID 33620 (/home/rohit-rawat/Desktop/TTN-EcommerceProject/target/classes started by rohit-rawat in /home/rohit-rawat/Desktop/TTN-EcommerceProject)
+2026-03-19T17:54:50.154+05:30 DEBUG 33620 --- [TTN-EcommerceProject] [restartedMain] o.p.t.TtnEcommerceProjectApplication     : Running with Spring Boot v4.0.3, Spring v7.0.5
+2026-03-19T17:54:50.154+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.p.t.TtnEcommerceProjectApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-03-19T17:54:50.364+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-19T17:54:50.397+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 30 ms. Found 14 JPA repository interfaces.
+2026-03-19T17:54:50.549+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-03-19T17:54:50.551+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-19T17:54:50.551+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-19T17:54:50.561+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 402 ms
+2026-03-19T17:54:50.633+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-19T17:54:50.660+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-19T17:54:50.661+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-03-19T17:54:50.676+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@47d86cac
+2026-03-19T17:54:50.676+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-03-19T17:54:50.678+05:30  WARN 33620 --- [TTN-EcommerceProject] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-03-19T17:54:50.679+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/ecommerce_ttnbootcamp]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.45
+	Default catalog/schema: ecommerce_ttnbootcamp/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-19T17:54:51.055+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-19T17:54:51.101+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-19T17:54:51.195+05:30 DEBUG 33620 --- [TTN-EcommerceProject] [restartedMain] o.p.t.security.JwtAuthenticationFilter   : Filter 'jwtAuthenticationFilter' configured for use
+2026-03-19T17:54:51.375+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-03-19T17:54:51.478+05:30  WARN 33620 --- [TTN-EcommerceProject] [restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'sellerController' defined in file [/home/rohit-rawat/Desktop/TTN-EcommerceProject/target/classes/org/project/ttnecommerce/controller/SellerController.class]: Unsatisfied dependency expressed through constructor parameter 0: No qualifying bean of type 'org.project.ttnecommerce.service.SellerService' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {}
+2026-03-19T17:54:51.479+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-19T17:54:51.479+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+2026-03-19T17:54:51.482+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+2026-03-19T17:54:51.483+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2026-03-19T17:54:51.487+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-03-19T17:54:51.503+05:30 ERROR 33620 --- [TTN-EcommerceProject] [restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 0 of constructor in org.project.ttnecommerce.controller.SellerController required a bean of type 'org.project.ttnecommerce.service.SellerService' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'org.project.ttnecommerce.service.SellerService' in your configuration.
+
+2026-03-19T17:54:52.964+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.p.t.TtnEcommerceProjectApplication     : Starting TtnEcommerceProjectApplication using Java 21.0.10 with PID 33620 (/home/rohit-rawat/Desktop/TTN-EcommerceProject/target/classes started by rohit-rawat in /home/rohit-rawat/Desktop/TTN-EcommerceProject)
+2026-03-19T17:54:52.964+05:30 DEBUG 33620 --- [TTN-EcommerceProject] [restartedMain] o.p.t.TtnEcommerceProjectApplication     : Running with Spring Boot v4.0.3, Spring v7.0.5
+2026-03-19T17:54:52.965+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.p.t.TtnEcommerceProjectApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-03-19T17:54:53.149+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-19T17:54:53.181+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 30 ms. Found 14 JPA repository interfaces.
+2026-03-19T17:54:53.321+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-03-19T17:54:53.324+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-19T17:54:53.324+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-19T17:54:53.334+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 365 ms
+2026-03-19T17:54:53.370+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-19T17:54:53.401+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-19T17:54:53.402+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+2026-03-19T17:54:53.419+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection com.mysql.cj.jdbc.ConnectionImpl@709422b
+2026-03-19T17:54:53.419+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+2026-03-19T17:54:53.420+05:30  WARN 33620 --- [TTN-EcommerceProject] [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-03-19T17:54:53.420+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/ecommerce_ttnbootcamp]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.45
+	Default catalog/schema: ecommerce_ttnbootcamp/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-19T17:54:53.620+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-19T17:54:53.650+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-19T17:54:53.715+05:30 DEBUG 33620 --- [TTN-EcommerceProject] [restartedMain] o.p.t.security.JwtAuthenticationFilter   : Filter 'jwtAuthenticationFilter' configured for use
+2026-03-19T17:54:53.846+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-03-19T17:54:53.963+05:30  WARN 33620 --- [TTN-EcommerceProject] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-19T17:54:54.027+05:30 DEBUG 33620 --- [TTN-EcommerceProject] [restartedMain] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with filters: DisableEncodeUrlFilter, WebAsyncManagerIntegrationFilter, SecurityContextHolderFilter, HeaderWriterFilter, LogoutFilter, JwtAuthenticationFilter, RequestCacheAwareFilter, SecurityContextHolderAwareRequestFilter, AnonymousAuthenticationFilter, SessionManagementFilter, ExceptionTranslationFilter, AuthorizationFilter
+2026-03-19T17:54:54.139+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-03-19T17:54:54.141+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] o.p.t.TtnEcommerceProjectApplication     : Started TtnEcommerceProjectApplication in 1.215 seconds (process running for 320.073)
+2026-03-19T17:54:54.146+05:30  INFO 33620 --- [TTN-EcommerceProject] [restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
