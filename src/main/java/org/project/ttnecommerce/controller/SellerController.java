@@ -108,5 +108,19 @@ public class SellerController {
         );
     }
 
+    @DeleteMapping("/delete-product/{productId}")
+    public ResponseEntity<ApiResponse> deleteProduct(@PathVariable UUID productId) {
+        String response = sellerService.deleteProduct(productId);
+        return ResponseEntity.ok(new ApiResponse(response));
+    }
+
+    @PatchMapping("/update-product")
+    public ResponseEntity<ApiResponse> updateProduct(
+            @RequestBody @Valid UpdateProductRequest request) {
+
+        String response = sellerService.updateProduct(request);
+        return ResponseEntity.ok(new ApiResponse(response));
+    }
+
 }
 

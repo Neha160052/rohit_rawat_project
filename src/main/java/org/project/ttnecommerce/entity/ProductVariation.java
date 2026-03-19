@@ -3,6 +3,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.project.ttnecommerce.entity.base.Auditable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 @Entity
@@ -18,8 +19,8 @@ public class ProductVariation extends Auditable {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @OneToMany(mappedBy = "productVariation")
-    private List<ProductVariationImage> images;
+    @OneToMany(mappedBy = "productVariation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductVariationImage> images = new ArrayList<>();
 
     private Integer quantityAvailable;
     private Double price;

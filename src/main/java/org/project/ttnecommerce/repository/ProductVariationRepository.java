@@ -22,7 +22,6 @@ public interface ProductVariationRepository extends JpaRepository<ProductVariati
     """)
     List<Object[]> findMinMaxPrice(@Param("categoryIds") List<UUID> categoryIds);
 
-
     @EntityGraph(attributePaths = {"images"})
     List<ProductVariation> findByProductAndIsDeletedFalse(Product product, Sort sort);
 
@@ -45,7 +44,6 @@ public interface ProductVariationRepository extends JpaRepository<ProductVariati
             Pageable pageable
     );
 
-
     @EntityGraph(attributePaths = {"images"})
     @Query("""
         SELECT v FROM ProductVariation v
@@ -58,4 +56,18 @@ public interface ProductVariationRepository extends JpaRepository<ProductVariati
             @Param("query") String query,
             Sort sort
     );
+
+    @Query("""
+        SELECT v FROM ProductVariation v
+        WHERE v.product = :product
+        AND v.metadata = :metadata
+        AND v.isDeleted = false
+    """)
+    Optional<ProductVariation> findDuplicateVariation(
+            @Param("product") Product product,
+            @Param("metadata") String metadata
+    );
+
+    @EntityGraph(attributePaths = {"product", "product.seller", "product.category"})
+    Optional<ProductVariation> findByIdAndIsDeletedFalse(UUID id);
 }
