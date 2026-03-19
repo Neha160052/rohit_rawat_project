@@ -1,6 +1,7 @@
 package org.project.ttnecommerce.service;
 import lombok.RequiredArgsConstructor;
 import org.project.ttnecommerce.Enum.ProductAction;
+import org.project.ttnecommerce.Enum.UserStatus;
 import org.project.ttnecommerce.dto.*;
 import org.project.ttnecommerce.entity.*;
 import org.project.ttnecommerce.exception.InvalidInputException;
@@ -65,98 +66,94 @@ public class AdminService {
     }
 
 
-    // activate customer method
+    // activate and deactivate customer method
     @Transactional
-    public String activateCustomer(UUID userId){
-        User user = userRepository.findById(userId).orElseThrow(() -> new InvalidRequestException("User not found"));
+    public MessageResponse updateCustomerStatus(UUID userId, UserStatus status) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if(user.getIsDeleted())
-            throw new InvalidRequestException("Deleted User Cannot be Activated");
+        if (Boolean.TRUE.equals(user.getIsDeleted())) {
+            throw new InvalidRequestException("Deleted user cannot be updated");
+        }
 
-        if(user.getCustomer()==null)
+        if (user.getCustomer() == null) {
             throw new InvalidRequestException("User is not a customer");
+        }
 
-        if(user.getIsActive())
-            return "Customer already active";
+        if (status == null) {
+            throw new InvalidRequestException("Status is required");
+        }
 
-        user.setIsActive(true);
-        userRepository.save(user);
-        emailService.sendCustomerActivationEmailByAdmin(user);
-        return "Customer activated successfully";
+        switch (status) {
+            case ACTIVATE:
+
+                if (Boolean.TRUE.equals(user.getIsActive())) {
+                    return new MessageResponse("Customer already active");
+                }
+                user.setIsActive(true);
+                emailService.sendCustomerActivationEmailByAdmin(user);
+                return new MessageResponse("Customer activated successfully");
+
+
+            case DEACTIVATE:
+                if (Boolean.FALSE.equals(user.getIsActive())) {
+                    return new MessageResponse("Customer already deactivated");
+                }
+                user.setIsActive(false);
+                emailService.sendCustomerDeactivationEmailByAdmin(user);
+                return new MessageResponse("Customer deactivated successfully");
+
+
+            default:
+                throw new InvalidRequestException("Invalid status value");
+        }
     }
 
-
-    // deactivate customer method
+    // activate and deactivate Seller method
     @Transactional
-    public String deactivateCustomer(UUID userId){
-        User user = userRepository.findById(userId).orElseThrow(() -> new InvalidRequestException("User not found"));
+    public MessageResponse updateSellerStatus(UUID userId, UserStatus status) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if(user.getIsDeleted())
-            throw new InvalidRequestException("Deleted Customer Cannot be Deactivated");
-
-        if(user.getCustomer()==null)
-            throw new InvalidRequestException("User is not a customer");
-
-        if(!user.getIsActive())
-            return "Customer already deactivated";
-
-        user.setIsActive(false);
-        userRepository.save(user);
-        emailService.sendCustomerDeactivationEmailByAdmin(user);
-
-        return "Customer deactivated successfully";
-    }
-
-
-    // activate Seller method
-    @Transactional
-    public String activateSeller(UUID userId){
-        User user = userRepository.findById(userId).orElseThrow(() -> new InvalidRequestException("User not found"));
-
-        if(user.getIsDeleted())
-            throw new InvalidRequestException("Deleted Seller Cannot be Activated");
+        if (Boolean.TRUE.equals(user.getIsDeleted())) {
+            throw new InvalidRequestException("Deleted user cannot be updated");
+        }
 
         Seller seller = user.getSeller();
 
-        if(seller==null)
+        if (seller == null) {
             throw new InvalidRequestException("User is not a seller");
+        }
 
-        if(user.getIsActive() && seller.getIsApproved())
-            return "Seller already active";
+        if (status == null) {
+            throw new InvalidRequestException("Status is required");
+        }
 
-        user.setIsActive(true);
-        seller.setIsApproved(true);
-        seller.setIsApproved(true);
+        switch (status) {
 
-        userRepository.save(user);
-        emailService.sendSellerActivationEmailByAdmin(user);
-        return "Seller activated successfully";
+            case ACTIVATE:
+                if (Boolean.TRUE.equals(user.getIsActive()) &&
+                        Boolean.TRUE.equals(seller.getIsApproved())) {
+                    return new MessageResponse("Seller already active");
+                }
+                user.setIsActive(true);
+                seller.setIsApproved(true);
+                emailService.sendSellerActivationEmailByAdmin(user);
+                return new MessageResponse("Seller activated successfully");
+
+            case DEACTIVATE:
+
+                if (Boolean.FALSE.equals(user.getIsActive())) {
+                    return new MessageResponse("Seller already deactivated");
+                }
+                user.setIsActive(false);
+                seller.setIsApproved(false);
+                emailService.sendSellerDeactivationEmailByAdmin(user);
+                return new MessageResponse("Seller deactivated successfully");
+            default:
+                throw new InvalidRequestException("Invalid status");
+        }
     }
-
-
-    // deactivate seller method
-    @Transactional
-    public String deactivateSeller(UUID userId){
-        User user = userRepository.findById(userId).orElseThrow(() -> new InvalidRequestException("User not found"));
-
-        if(user.getIsDeleted())
-            throw new InvalidRequestException("Deleted Seller Cannot be Deactivated");
-
-        Seller seller = user.getSeller();
-
-        if(seller==null)
-            throw new InvalidRequestException("User is not a seller");
-
-        if(!user.getIsActive())
-            return "Seller already deactivated";
-
-        user.setIsActive(false);
-        seller.setIsApproved(false);
-        userRepository.save(user);
-        emailService.sendSellerDeactivationEmailByAdmin(user);
-        return "Seller deactivated successfully";
-    }
-
 
     // addMetadataField method
     @Transactional

@@ -17,7 +17,7 @@ public class JwtUtils {
     @Value("${security.jwt.secret-key}")
     private String secretKey;
 
-    private final long EXPIRATION_TIME = 1000 * 60 * 15;
+    private final long EXPIRATION_TIME = 1000 * 60 * 15; // 15 minutes
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
@@ -37,27 +37,21 @@ public class JwtUtils {
         return extractAllClaims(token).getSubject();
     }
 
-    public Date extractExpiration(String token){
+    public Date extractExpiration(String token) {
         return extractAllClaims(token).getExpiration();
     }
 
     public boolean isTokenValid(String token, CustomUserDetails userDetails) {
-
         final String username = extractUsername(token);
-
         return username.equals(userDetails.getUsername())
                 && !isTokenExpired(token);
     }
 
-    private boolean isTokenExpired(String token) {
-
-        Date expiration = extractExpiration(token);
-
-        return expiration.before(new Date());
+    public boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
     }
 
     private Claims extractAllClaims(String token) {
-
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()

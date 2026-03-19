@@ -49,31 +49,22 @@ public class AdminController {
         return ResponseEntity.ok(sellers);
     }
 
-    @PatchMapping("/customers/activate/{id}")
-    public ResponseEntity<String> activateCustomer(@PathVariable UUID id) {
-        log.info("Admin API called: Activate customer | customerId={}", id);
-        String response = adminService.activateCustomer(id);
-        return ResponseEntity.ok(response);
+    @PatchMapping("/customers/{id}")
+    public ResponseEntity<MessageResponse> updateCustomerStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody StatusUpdateRequest request) {
+
+        return ResponseEntity.ok(adminService.updateCustomerStatus(id, request.getStatus()));
     }
 
-    @PatchMapping("/customers/deactivate/{id}")
-    public ResponseEntity<String> deactivateCustomer(@PathVariable UUID id) {
-        log.info("Admin API called: Deactivate customer | customerId={}", id);
-        return ResponseEntity.ok(adminService.deactivateCustomer(id));
-    }
+    @PatchMapping("/sellers/{id}")
+    public ResponseEntity<MessageResponse> updateSellerStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody StatusUpdateRequest request) {
 
-    @PatchMapping("/sellers/activate/{id}")
-    public ResponseEntity<String> activateSeller(@PathVariable UUID id) {
-        log.info("Admin API called: Activate seller | sellerId={}", id);
-        String response = adminService.activateSeller(id);
-        return ResponseEntity.ok(response);
-    }
-
-    @PatchMapping("/sellers/deactivate/{id}")
-    public ResponseEntity<String> deactivateSeller(@PathVariable UUID id) {
-        log.info("Admin API called: Deactivate seller | sellerId={}", id);
-        String response = adminService.deactivateSeller(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                adminService.updateSellerStatus(id, request.getStatus())
+        );
     }
 
     @PostMapping("/add-metadata-field")

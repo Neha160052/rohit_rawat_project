@@ -1,11 +1,9 @@
 package org.project.ttnecommerce.security;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.project.ttnecommerce.repository.BlacklistedTokenRepository;
 import org.project.ttnecommerce.security.Utils.JwtUtils;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,38 +19,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
     private final CustomUserDetailsService userDetailsService;
-    private final BlacklistedTokenRepository blacklistedTokenRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
-
         String token = null;
         String username = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
             token = authHeader.substring(7);
-
-            if (blacklistedTokenRepository.existsByToken(token)) {
-
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-
-                response.getWriter().write("""
-                {
-                    "error": "Unauthorized",
-                    "message": "Token has been revoked"
-                }
-                """);
-
-                return;
-            }
-
             try {
                 username = jwtUtils.extractUsername(token);
             } catch (Exception e) {
@@ -61,38 +38,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        if (username != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
-
-            CustomUserDetails userDetails =
-                    (CustomUserDetails) userDetailsService.loadUserByUsername(username);
-
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(username);
             if (jwtUtils.isTokenValid(token, userDetails)) {
-
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request)
-                );
-
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
-
         filterChain.doFilter(request, response);
     }
-
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-
         String path = request.getServletPath();
-
         return path.startsWith("/auth/login") ||
                 path.startsWith("/auth/logout") ||
                 path.startsWith("/auth/refresh") ||

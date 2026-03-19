@@ -20,12 +20,13 @@ public class RefreshTokenService {
     public RefreshToken createRefreshToken(User user) {
 
         refreshTokenRepository.deleteByUser_Id(user.getId());
+        refreshTokenRepository.flush(); // ✅ CRITICAL
 
         RefreshToken refreshToken = new RefreshToken();
-
         refreshToken.setUser(user);
         refreshToken.setToken(UUID.randomUUID().toString());
         refreshToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+
         return refreshTokenRepository.save(refreshToken);
     }
 
