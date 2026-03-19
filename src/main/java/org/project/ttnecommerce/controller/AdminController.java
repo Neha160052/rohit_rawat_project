@@ -136,8 +136,22 @@ public class AdminController {
     }
 
     @GetMapping("/get-products")
-    public ResponseEntity<List<ProductResponse>> getProducts(@Valid ProductFilterRequest request) {
-        return ResponseEntity.ok(adminService.getAllProducts(request));
+    public ResponseEntity<ProductListResponse> getAllProducts(
+            @RequestParam(defaultValue = "10") Integer max,
+            @RequestParam(defaultValue = "0") Integer offset,
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(defaultValue = "asc") String order,
+            @RequestParam(required = false) UUID sellerId,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) UUID productId
+    ) {
+
+        log.info("Admin: Fetch products | max={} offset={} sort={} order={} sellerId={} categoryId={} productId={}",
+                max, offset, sort, order, sellerId, categoryId, productId);
+
+        return ResponseEntity.ok(
+                adminService.getAllProducts(max, offset, sort, order, sellerId, categoryId, productId)
+        );
     }
 
     @PutMapping("/product-status")

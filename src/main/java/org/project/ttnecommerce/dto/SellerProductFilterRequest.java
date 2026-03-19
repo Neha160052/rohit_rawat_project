@@ -6,7 +6,7 @@ import java.util.UUID;
 
 @Getter
 @Setter
-public class ProductFilterRequest {
+public class SellerProductFilterRequest {
 
     @Min(value = 1, message = "Max must be at least 1")
     @Max(value = 100, message = "Max cannot exceed 100")
@@ -16,8 +16,8 @@ public class ProductFilterRequest {
     private Integer offset = 0;
 
     @Pattern(
-            regexp = "id|name|brand",
-            message = "Sort must be one of: id, name, brand"
+            regexp = "id|name|brand|createdDate|isActive",
+            message = "Sort must be one of: id, name, brand, createdDate, isActive"
     )
     private String sort = "id";
 
@@ -27,10 +27,6 @@ public class ProductFilterRequest {
     )
     private String order = "asc";
 
-    private UUID sellerId;
-
-    private UUID categoryId;
-
     private UUID productId;
-
+    private UUID categoryId;
 }

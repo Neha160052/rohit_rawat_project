@@ -4,14 +4,20 @@ import lombok.RequiredArgsConstructor;
 import org.project.ttnecommerce.dto.*;
 import org.project.ttnecommerce.entity.*;
 import org.project.ttnecommerce.exception.*;
+import org.project.ttnecommerce.exception.AccessDeniedException;
 import org.project.ttnecommerce.repository.*;
 import org.project.ttnecommerce.security.CustomUserDetails;
+import org.project.ttnecommerce.specification.SellerProductSpecification;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.security.core.Authentication;
 import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.*;
@@ -22,6 +28,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SellerService {
 
+    private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
     private final SellerRepository sellerRepository;
     private final AddressRepository addressRepository;
@@ -31,9 +38,9 @@ public class SellerService {
     private final CategoryRepository categoryRepository;
     private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
     private final ProductRepository productRepository;
-    private final ProductVariationRepository productVariationRepository;
     private final FileStorageService fileStorageService;
     private final ProductVariationImageRepository productVariationImageRepository;
+    private final ProductVariationRepository variationRepository;
 
     private static final String BASE_PATH = "uploads/users/";
 
@@ -151,11 +158,7 @@ public class SellerService {
     // update profile method
     @Transactional
     public void updateSellerProfile(SellerProfileUpdateRequest request) {
-        CustomUserDetails userDetails =
-                (CustomUserDetails) SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-                        .getPrincipal();
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         String email = userDetails.getUsername();
 
@@ -216,11 +219,7 @@ public class SellerService {
     @Transactional
     public void updateSellerPassword(UpdatePasswordRequest request) {
 
-        CustomUserDetails userDetails =
-                (CustomUserDetails) SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-                        .getPrincipal();
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         String email = userDetails.getUsername();
 
@@ -248,11 +247,7 @@ public class SellerService {
     @Transactional
     public void updateAddress(UUID addressId, UpdateAddressRequest request) {
 
-        CustomUserDetails userDetails =
-                (CustomUserDetails) SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-                        .getPrincipal();
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         String email = userDetails.getUsername();
 
@@ -294,7 +289,6 @@ public class SellerService {
 
 
 
-
     // get category method
     @Transactional
     public List<SellerCategoryResponse> getCategory() {
@@ -323,7 +317,8 @@ public class SellerService {
                 if (!metadataMap.containsKey(fieldId)) {
                     metadataMap.put(fieldId,
                             new MetadataFieldWithValuesResponse(fieldId, fieldName, new ArrayList<>(values)));
-                } else {
+                }
+                else {
                     metadataMap.get(fieldId).getValues().addAll(values);
                 }
             }
@@ -428,101 +423,113 @@ public class SellerService {
     }
 
     // add Product Variation method
+
     @Transactional
     public String addProductVariation(AddProductVariationRequest request) {
 
-        CustomUserDetails userDetails =
-                (CustomUserDetails) SecurityContextHolder.getContext()
-                        .getAuthentication().getPrincipal();
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         User seller = userDetails.getUser();
 
+        if (Boolean.TRUE.equals(seller.getIsDeleted()) || !Boolean.TRUE.equals(seller.getIsActive())) {
+            throw new InvalidRequestException("Seller account is not active");
+        }
 
-        Product product = productRepository.findById(request.getProductId())
+        if (seller.getSeller() == null || !Boolean.TRUE.equals(seller.getSeller().getIsApproved())) {
+            throw new InvalidRequestException("Seller is not approved");
+        }
+
+
+        Product product = productRepository.findByIdAndIsDeletedFalse(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-        if (product.getIsDeleted())
-            throw new InvalidRequestException("Product is deleted");
-
-        if (!product.getIsActive())
+        if (!product.getIsActive()) {
             throw new InvalidRequestException("Product is not active");
+        }
 
-        if (!product.getSeller().getId().equals(seller.getId()))
+        if (!product.getSeller().getId().equals(seller.getId())) {
             throw new InvalidRequestException("Unauthorized access to product");
+        }
 
-        ObjectMapper mapper = new ObjectMapper();
+        if (request.getQuantityAvailable() < 0) {
+            throw new InvalidRequestException("Quantity cannot be negative");
+        }
+
+        if (request.getPrice() < 0) {
+            throw new InvalidRequestException("Price cannot be negative");
+        }
 
         Map<String, String> metadataMap;
 
         try {
-            metadataMap = mapper.readValue(request.getMetadata(), Map.class);
+
+            metadataMap = objectMapper.readValue(request.getMetadata(), Map.class);
         }
         catch (Exception e) {
-            throw new InvalidRequestException("Invalid metadata format");
+            throw new InvalidRequestException("Invalid metadata format (must be JSON)");
         }
 
-        if (metadataMap == null || metadataMap.isEmpty())
+        if (metadataMap == null || metadataMap.isEmpty()) {
             throw new InvalidRequestException("Metadata cannot be empty");
+        }
 
         Map<String, String> normalizedMetadata = new HashMap<>();
 
         for (Map.Entry<String, String> entry : metadataMap.entrySet()) {
-
             String key = entry.getKey().toLowerCase().trim();
             String value = entry.getValue().toLowerCase().trim();
 
-            if (key.isEmpty() || value.isEmpty())
-                throw new InvalidRequestException("Invalid metadata");
+            if (key.isEmpty() || value.isEmpty()) {
+                throw new InvalidRequestException("Invalid metadata key/value");
+            }
 
             normalizedMetadata.put(key, value);
         }
 
         metadataMap = normalizedMetadata;
 
-        List<CategoryMetadataFieldValues> allowed =
-                categoryMetadataFieldValuesRepository.findByCategory(product.getCategory());
+        List<CategoryMetadataFieldValues> allowed = categoryMetadataFieldValuesRepository.findByCategory(product.getCategory());
 
         Map<String, Set<String>> validMap = new HashMap<>();
 
         for (CategoryMetadataFieldValues field : allowed) {
-            validMap
-                    .computeIfAbsent(field.getMetadataField().getName().toLowerCase(), k -> new HashSet<>())
-                    .add(field.getValue().toLowerCase());
+
+            String fieldName = field.getMetadataField().getName().toLowerCase();
+
+            Set<String> values = Arrays.stream(field.getValue().split(","))
+                    .map(String::trim)
+                    .map(String::toLowerCase)
+                    .collect(Collectors.toSet());
+
+            validMap.computeIfAbsent(fieldName, k -> new HashSet<>())
+                    .addAll(values);
+        }
+
+        if (metadataMap.size() != validMap.size()) {
+            throw new InvalidRequestException("Metadata structure mismatch");
         }
 
         for (Map.Entry<String, String> entry : metadataMap.entrySet()) {
 
-            if (!validMap.containsKey(entry.getKey()))
+            if (!validMap.containsKey(entry.getKey())) {
                 throw new InvalidRequestException("Invalid metadata field: " + entry.getKey());
-
-            if (!validMap.get(entry.getKey()).contains(entry.getValue()))
-                throw new InvalidRequestException("Invalid metadata value for " + entry.getKey());
-        }
-
-        List<ProductVariation> existing =
-                productVariationRepository.findByProductAndIsDeletedFalse(product);
-
-        if (!existing.isEmpty()) {
-            try {
-                Map<String, String> existingMeta =
-                        mapper.readValue(existing.get(0).getMetadata(), Map.class);
-
-                if (!existingMeta.keySet().equals(metadataMap.keySet()))
-                    throw new InvalidRequestException("All variations must have same metadata structure");
-
             }
-            catch (Exception e) {
-                throw new InvalidRequestException("Metadata structure validation failed");
+
+            if (!validMap.get(entry.getKey()).contains(entry.getValue())) {
+                throw new InvalidRequestException("Invalid value for field: " + entry.getKey());
             }
         }
+
+        List<ProductVariation> existing = variationRepository.findByProductAndIsDeletedFalse(product, Sort.by(Sort.Direction.ASC, "id"));
 
         for (ProductVariation pv : existing) {
             try {
                 Map<String, String> existingMeta =
-                        mapper.readValue(pv.getMetadata(), Map.class);
+                        objectMapper.readValue(pv.getMetadata(), Map.class);
 
-                if (existingMeta.equals(metadataMap))
-                    throw new InvalidRequestException("Duplicate variation exists");
+                if (existingMeta.equals(metadataMap)) {
+                    throw new InvalidRequestException("Duplicate variation already exists");
+                }
 
             } catch (Exception e) {
                 throw new InvalidRequestException("Metadata comparison failed");
@@ -536,10 +543,16 @@ public class SellerService {
         variation.setIsActive(true);
         variation.setIsDeleted(false);
 
-        productVariationRepository.save(variation);
+        try {
+            variation.setMetadata(objectMapper.writeValueAsString(metadataMap));
+        }
+        catch (Exception e) {
+            throw new InvalidRequestException("Metadata processing failed");
+        }
 
-        String primaryImageName = fileStorageService.storeProductVariationImage(
-                request.getPrimaryImage(),
+        variationRepository.save(variation);
+
+        String primaryImageName = fileStorageService.storeProductVariationImage(request.getPrimaryImage(),
                 product.getId(),
                 variation.getId(),
                 true,
@@ -548,24 +561,11 @@ public class SellerService {
 
         variation.setPrimaryImageName(primaryImageName);
 
-        try {
-            variation.setMetadata(mapper.writeValueAsString(metadataMap));
-        }
-        catch (Exception e) {
-            throw new InvalidRequestException("Metadata processing failed");
-        }
-
-        productVariationRepository.save(variation);
-
         if (request.getSecondaryImages() != null) {
-
             int index = 1;
-
             for (MultipartFile file : request.getSecondaryImages()) {
 
-                String fileName = fileStorageService.storeProductVariationImage(
-                        file,
-                        product.getId(),
+                String fileName = fileStorageService.storeProductVariationImage(file, product.getId(),
                         variation.getId(),
                         false,
                         index++
@@ -580,12 +580,205 @@ public class SellerService {
             }
         }
 
+        variationRepository.save(variation);
+
         return "Product variation created successfully";
     }
 
+    // seller get-product
+    @Transactional
+    public List<SellerProductResponse> getSellerProducts(SellerProductFilterRequest request) {
+
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getSeller() == null) {
+            throw new AccessDeniedException("User is not a seller");
+        }
+
+        UUID sellerId = user.getId();
+
+        if (request.getProductId() != null) {
+            validateProductAccess(request.getProductId(), sellerId);
+        }
+
+        Sort sort = Sort.by(request.getOrder().equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, request.getSort());
+        int page = request.getOffset() / request.getMax();
+        Pageable pageable = PageRequest.of(page, request.getMax(), sort);
+
+        Specification<Product> spec = SellerProductSpecification.filterProducts(sellerId, request.getProductId(), request.getCategoryId());
+        Page<Product> pageResult = productRepository.findAll(spec, pageable);
+        int start = request.getOffset() % request.getMax();
+        List<Product> content = pageResult.getContent();
+
+        if (start >= content.size()) {
+            return Collections.emptyList();
+        }
+
+        List<Product> sliced = content.subList(start, content.size());
+
+        return sliced.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private void validateProductAccess(UUID productId, UUID sellerId) {
+
+        Product product = productRepository
+                .findByIdAndIsDeletedFalse(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        if (!product.getSeller().getId().equals(sellerId)) {
+            throw new AccessDeniedException("Not your product");
+        }
+    }
+
+    private SellerProductResponse mapToResponse(Product product) {
+        CategoryResponse category = new CategoryResponse();
+        category.setId(product.getCategory().getId());
+        category.setName(product.getCategory().getName());
+
+        return SellerProductResponse.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .brand(product.getBrand())
+                .isActive(product.getIsActive())
+                .category(category)
+                .build();
+    }
 
 
+    // getproduct variation method
+    @Transactional
+    public VariationPageResponse getVariations(UUID productId, Integer max, Integer offset, String sort, String order, String query, UUID productVariationId) {
+        if (productId == null) {
+            throw new InvalidRequestException("Product ID is mandatory");
+        }
 
+        if (max == null || max < 1 || max > 50) {
+            throw new InvalidRequestException("'max' must be between 1 and 50");
+        }
+
+        if (offset == null || offset < 0) {
+            throw new InvalidRequestException("'offset' cannot be negative");
+        }
+
+        List<String> allowedSort = List.of("id", "price", "quantity");
+        if (sort == null || !allowedSort.contains(sort.toLowerCase())) {
+            throw new InvalidRequestException("Invalid sort field");
+        }
+
+        if (order == null || (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc"))) {
+            throw new InvalidRequestException("Invalid order");
+        }
+
+        Map<String, String> sortMap = Map.of(
+                "id", "id",
+                "price", "price",
+                "quantity", "quantityAvailable"
+        );
+
+        String resolvedSort = sortMap.get(sort.toLowerCase());
+
+        Sort.Direction direction = order.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        Sort sortObj = Sort.by(direction, resolvedSort);
+
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getSeller() == null) {
+            throw new AccessDeniedException("Only sellers allowed");
+        }
+
+        if (!Boolean.TRUE.equals(user.getIsActive())) {
+            throw new InvalidRequestException("User not active");
+        }
+
+        Product product = productRepository.findByIdAndSellerIdAndIsDeletedFalse(productId, user.getSeller().getId())
+                .orElseThrow(() -> new AccessDeniedException("Product not found or not yours"));
+
+
+        List<ProductVariation> allVariations;
+
+        if (productVariationId != null) {
+
+            ProductVariation variation = variationRepository.findByIdAndProduct(productVariationId, product)
+                    .orElseThrow(() -> new ResourceNotFoundException("Variation not found"));
+
+            allVariations = List.of(variation);
+
+        }
+        else if (query != null && !query.isBlank()) {
+
+            allVariations = variationRepository.searchByProductWithoutPaging(product, query.trim().toLowerCase(), sortObj);
+
+        }
+        else {
+
+            allVariations = variationRepository.findByProductAndIsDeletedFalse(product, sortObj);
+        }
+
+        int total = allVariations.size();
+
+        if (offset >= total) {
+            return VariationPageResponse.builder().content(Collections.emptyList()).offset(offset).max(max).totalElements(total).build();
+        }
+
+        int end = Math.min(offset + max, total);
+
+        List<ProductVariation> paged = allVariations.subList(offset, end);
+
+        List<VariationDetailResponse> content = paged.stream()
+                .map(this::mapToVariationDetailResponse)
+                .toList();
+
+        return VariationPageResponse.builder()
+                .content(content)
+                .offset(offset)
+                .max(max)
+                .totalElements(total)
+                .build();
+    }
+
+    private VariationDetailResponse mapToVariationDetailResponse(ProductVariation v) {
+
+        List<String> secondaryImages = Collections.emptyList();
+
+        if (v.getImages() != null && !v.getImages().isEmpty()) {
+            secondaryImages = v.getImages().stream()
+                    .filter(img -> !Boolean.TRUE.equals(img.getIsPrimary()))
+                    .map(img -> buildImageUrl(v.getProduct().getId(), img.getImageName()))
+                    .toList();
+        }
+
+        return VariationDetailResponse.builder()
+                .variationId(v.getId())
+                .price(v.getPrice())
+                .quantityAvailable(v.getQuantityAvailable())
+                .metadata(v.getMetadata())
+                .primaryImage(buildImageUrl(
+                        v.getProduct().getId(),
+                        v.getPrimaryImageName()
+                ))
+                .secondaryImages(secondaryImages)
+                .isActive(v.getIsActive())
+                .isDeleted(v.getIsDeleted())
+                .build();
+    }
+
+    private String buildImageUrl(UUID productId, String imageName) {
+        if (imageName == null) return null;
+
+        return "/uploads/products/" +
+                productId +
+                "/variations/" +
+                imageName;
+    }
 
 
 

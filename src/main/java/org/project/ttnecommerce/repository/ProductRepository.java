@@ -33,9 +33,10 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
     @EntityGraph(attributePaths = {"category", "variations"})
     Page<Product> findAll(Specification<Product> spec, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"category", "variations"})
-    Optional<Product> findByIdAndIsDeletedFalseAndIsActiveTrue(UUID id);
-
     @EntityGraph(attributePaths = {"seller"})
     Optional<Product> findByIdAndIsDeletedFalse(UUID id);
+
+
+    @EntityGraph(attributePaths = {"seller"})
+    Optional<Product> findByIdAndSellerIdAndIsDeletedFalse(UUID productId, UUID sellerId);
 }

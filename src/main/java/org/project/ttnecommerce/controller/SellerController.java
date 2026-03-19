@@ -82,6 +82,31 @@ public class SellerController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/get-products")
+    public ResponseEntity<List<SellerProductResponse>> getSellerProducts(
+            @Valid @ModelAttribute SellerProductFilterRequest request
+    ) {
+        return ResponseEntity.ok(sellerService.getSellerProducts(request));
+    }
+
+
+    @GetMapping("/products/{productId}/variations")
+    public ResponseEntity<VariationPageResponse> getVariations(
+            @PathVariable UUID productId,
+            @RequestParam(defaultValue = "10") Integer max,
+            @RequestParam(defaultValue = "0") Integer offset,
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(defaultValue = "asc") String order,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) UUID productVariationId
+    ) {
+
+        return ResponseEntity.ok(
+                sellerService.getVariations(
+                        productId, max, offset, sort, order, query, productVariationId
+                )
+        );
+    }
 
 }
 
