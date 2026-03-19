@@ -892,16 +892,12 @@ public class SellerService {
             }
         }
 
-        if (request.getIsCancellable() != null &&
-                !request.getIsCancellable().equals(product.getIsCancellable())) {
-
+        if (request.getIsCancellable() != null && !request.getIsCancellable().equals(product.getIsCancellable())) {
             product.setIsCancellable(request.getIsCancellable());
             isUpdated = true;
         }
 
-        if (request.getIsReturnable() != null &&
-                !request.getIsReturnable().equals(product.getIsReturnable())) {
-
+        if (request.getIsReturnable() != null && !request.getIsReturnable().equals(product.getIsReturnable())) {
             product.setIsReturnable(request.getIsReturnable());
             isUpdated = true;
         }
@@ -913,6 +909,7 @@ public class SellerService {
         return "Product updated successfully";
     }
 
+    //update Product Variation method
     @Transactional
     public String updateProductVariation(UpdateProductVariationRequest request, String email) {
 
@@ -923,8 +920,7 @@ public class SellerService {
             throw new AccessDeniedException("User is not a seller");
         }
 
-        ProductVariation variation = variationRepository
-                .findById(request.getVariationId())
+        ProductVariation variation = variationRepository.findById(request.getVariationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Variation not found"));
 
         if (variation.getIsDeleted()) {
@@ -933,10 +929,8 @@ public class SellerService {
 
         Product product = variation.getProduct();
 
-        productRepository.findByIdAndSellerIdAndIsDeletedFalse(
-                product.getId(),
-                user.getSeller().getId()
-        ).orElseThrow(() -> new AccessDeniedException("You do not own this product"));
+        productRepository.findByIdAndSellerIdAndIsDeletedFalse(product.getId(), user.getSeller().getId())
+                .orElseThrow(() -> new AccessDeniedException("You do not own this product"));
 
         if (!product.getIsActive()) {
             throw new InvalidRequestException("Product is not active");

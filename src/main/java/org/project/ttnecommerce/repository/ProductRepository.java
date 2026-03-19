@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.repository.query.Param;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -39,4 +41,12 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
 
     @EntityGraph(attributePaths = {"seller"})
     Optional<Product> findByIdAndSellerIdAndIsDeletedFalse(UUID productId, UUID sellerId);
+
+    @Query("""
+    SELECT p FROM Product p
+    WHERE p.category IN :categories
+    AND p.isDeleted = false
+    AND p.isActive = true
+""")
+    List<Product> findValidProductsByCategories(@Param("categories") List<Category> categories);
 }

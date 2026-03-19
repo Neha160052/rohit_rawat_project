@@ -109,4 +109,36 @@ public class CustomerController {
         CategoryFilterResponse response = customerService.getCategoryFilterDetails(categoryId);
         return ResponseEntity.ok(response);
     }
+
+
+    @GetMapping("/get-products/{productId}")
+    public ResponseEntity<ProductResponse> viewProduct(@PathVariable UUID productId) {
+        return ResponseEntity.ok(customerService.viewProduct(productId));
+    }
+
+    @GetMapping("/getAll-category-products")
+    public ResponseEntity<List<ProductResponse>> viewAllProducts(
+            @RequestParam UUID categoryId,
+            @RequestParam(required = false) Integer max,
+            @RequestParam(required = false) Integer offset,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String order
+    ) {
+        return ResponseEntity.ok(
+                customerService.viewAllProducts(categoryId, max, offset, sort, order)
+        );
+    }
+
+    @GetMapping("/get-products/similar/{productId}")
+    public ResponseEntity<List<SimilarProductResponse>> getSimilarProducts(
+            @PathVariable UUID productId,
+            @RequestParam(required = false) Integer max,
+            @RequestParam(required = false) Integer offset,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String order
+    ) {
+        return ResponseEntity.ok(
+                customerService.getSimilarProducts(productId, max, offset, sort, order)
+        );
+    }
 }

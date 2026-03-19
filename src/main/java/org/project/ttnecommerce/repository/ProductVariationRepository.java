@@ -25,8 +25,6 @@ public interface ProductVariationRepository extends JpaRepository<ProductVariati
     @EntityGraph(attributePaths = {"images"})
     List<ProductVariation> findByProductAndIsDeletedFalse(Product product, Sort sort);
 
-    @EntityGraph(attributePaths = {"images"})
-    Page<ProductVariation> findByProductAndIsDeletedFalse(Product product, Pageable pageable);
 
     @EntityGraph(attributePaths = {"images"})
     Optional<ProductVariation> findByIdAndProduct(UUID id, Product product);
@@ -68,6 +66,13 @@ public interface ProductVariationRepository extends JpaRepository<ProductVariati
             @Param("metadata") String metadata
     );
 
-    @EntityGraph(attributePaths = {"product", "product.seller", "product.category"})
-    Optional<ProductVariation> findByIdAndIsDeletedFalse(UUID id);
+    @EntityGraph(attributePaths = {"images"})
+    @Query("""
+        SELECT v FROM ProductVariation v
+        WHERE v.product = :product
+        AND v.isDeleted = false
+        AND v.isActive = true
+        AND v.quantityAvailable > 0
+    """)
+    List<ProductVariation> findValidVariations(@Param("product") Product product);
 }

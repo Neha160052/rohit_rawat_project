@@ -38,6 +38,7 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final BlacklistedTokenRepository blacklistedTokenRepository;
 
+    @Transactional
     public LoginResponse login(LoginRequest request, HttpServletResponse response) {
         log.info("Login attempt for email: {}", request.getEmail());
 

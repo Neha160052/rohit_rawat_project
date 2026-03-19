@@ -6,6 +6,7 @@ import org.project.ttnecommerce.dto.*;
 import org.project.ttnecommerce.service.SellerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
@@ -120,6 +121,14 @@ public class SellerController {
 
         String response = sellerService.updateProduct(request);
         return ResponseEntity.ok(new ApiResponse(response));
+    }
+
+    @PatchMapping(value = "/update-product-variation", consumes = "multipart/form-data")
+    public ResponseEntity<String> updateProductVariation(@ModelAttribute @Valid UpdateProductVariationRequest request,
+            Authentication authentication) {
+        String email = authentication.getName();
+        String response = sellerService.updateProductVariation(request, email);
+        return ResponseEntity.ok(response);
     }
 
 }

@@ -129,6 +129,7 @@ public class CustomerService {
         emailService.sendActivationEmail(user.getEmail(), token);
     }
 
+
     // get Customer Profile method
     public CustomerProfileResponse getCustomerProfile() {
         User user = getCurrentAuthenticatedUser();
@@ -278,7 +279,7 @@ public class CustomerService {
         addressRepository.save(address);
     }
 
-    // delete customer method
+    // deleteAddress customer method
     @Transactional
     public void deleteAddress(UUID addressId) {
 
@@ -342,8 +343,7 @@ public class CustomerService {
     @Transactional
     public CategoryFilterResponse getCategoryFilterDetails(UUID categoryId) {
 
-        Category category = categoryRepository
-                .findByIdAndIsDeletedFalse(categoryId)
+        Category category = categoryRepository.findByIdAndIsDeletedFalse(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
         List<Category> categoryTree = new ArrayList<>();
@@ -353,11 +353,9 @@ public class CustomerService {
                 .map(Category::getId)
                 .toList();
 
-        List<CategoryMetadataFieldValues> metadataValues =
-                categoryMetadataFieldValuesRepository.findByCategory(category);
+        List<CategoryMetadataFieldValues> metadataValues = categoryMetadataFieldValuesRepository.findByCategory(category);
 
-        List<MetadataFieldWithValuesResponse> metadataResponses =
-                metadataValues.stream()
+        List<MetadataFieldWithValuesResponse> metadataResponses = metadataValues.stream()
                         .map(m -> new MetadataFieldWithValuesResponse(
                                 m.getMetadataField().getId(),
                                 m.getMetadataField().getName(),
@@ -386,10 +384,8 @@ public class CustomerService {
             }
         }
         PriceRangeResponse priceRange = new PriceRangeResponse(minPrice, maxPrice);
-
         return new CategoryFilterResponse(metadataResponses, brands, priceRange);
     }
-
 
     private void collectChildCategories(Category category, List<Category> categoryList) {
         categoryList.add(category);
@@ -401,6 +397,249 @@ public class CustomerService {
     }
 
 
+    // get product method
+    @Transactional
+    public ProductResponse viewProduct(UUID productId) {
+
+        Product product = productRepository.findByIdAndIsDeletedFalse(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        if (!Boolean.TRUE.equals(product.getIsActive())) {
+            throw new InvalidRequestException("Product is not active");
+        }
+
+        Category category = product.getCategory();
+        if (category == null || Boolean.TRUE.equals(category.getIsDeleted())) {
+            throw new InvalidRequestException("Product category is invalid or deleted");
+        }
+
+        List<ProductVariation> variations = getValidVariationsOrThrow(product);
+        return buildProductResponse(product, variations);
+    }
+
+    // get all category product method
+    @Transactional
+    public List<ProductResponse> viewAllProducts(UUID categoryId, Integer max, Integer offset, String sort, String order) {
+
+        max = (max == null) ? 10 : max;
+        offset = (offset == null) ? 0 : offset;
+        sort = (sort == null) ? "id" : sort;
+        order = (order == null) ? "asc" : order;
+
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+
+        if (Boolean.TRUE.equals(category.getIsDeleted())) {
+            throw new InvalidRequestException("Category is deleted");
+        }
+
+        List<Category> categories = getAllCategories(category);
+
+        List<Product> products =
+                productRepository.findValidProductsByCategories(categories);
+
+        if (products.isEmpty()) return List.of();
+
+        List<Product> validProducts = products.stream()
+                .filter(p -> !productVariationRepository.findValidVariations(p).isEmpty())
+                .toList();
+
+        if (validProducts.isEmpty()) return List.of();
+
+        Comparator<Product> comparator = getComparator(sort);
+
+        if ("desc".equalsIgnoreCase(order)) {
+            comparator = comparator.reversed();
+        }
+
+        List<Product> sorted = validProducts.stream()
+                .sorted(comparator)
+                .toList();
+
+        int start = Math.min(offset, sorted.size());
+        int end = Math.min(start + max, sorted.size());
+
+        List<Product> paginated = sorted.subList(start, end);
+
+        return paginated.stream()
+                .map(p -> buildProductResponse(p,
+                        productVariationRepository.findValidVariations(p)))
+                .toList();
+    }
+
+    private List<ProductVariation> getValidVariationsOrThrow(Product product) {
+        List<ProductVariation> variations = productVariationRepository.findValidVariations(product);
+
+        if (variations.isEmpty()) {
+            throw new InvalidRequestException("No valid variations available for this product");
+        }
+
+        return variations;
+    }
+
+    private ProductResponse buildProductResponse(Product product, List<ProductVariation> variations) {
+
+        List<VariationResponse> variationResponses = variations.stream()
+                .map(this::mapToVariationResponse)
+                .toList();
+
+        List<String> primaryImages = variations.stream()
+                .map(v -> {
+                    if (v.getPrimaryImageName() != null) {
+                        return v.getPrimaryImageName();
+                    } else if (v.getImages() != null && !v.getImages().isEmpty()) {
+                        return v.getImages().get(0).getImageName();
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        return ProductResponse.builder()
+                .productId(product.getId())
+                .name(product.getName())
+                .brand(product.getBrand())
+                .description(product.getDescription())
+                .category(mapToCategoryDto(product.getCategory()))
+                .primaryImages(primaryImages)
+                .variations(variationResponses)
+                .build();
+    }
+
+    private VariationResponse mapToVariationResponse(ProductVariation v) {
+
+        String primaryImage = v.getPrimaryImageName();
+
+        if (primaryImage == null && v.getImages() != null && !v.getImages().isEmpty()) {
+            primaryImage = v.getImages().get(0).getImageName();
+        }
+
+        return VariationResponse.builder()
+                .id(v.getId())
+                .price(v.getPrice())
+                .quantity(v.getQuantityAvailable())
+                .primaryImage(primaryImage)
+                .metadata(v.getMetadata())
+                .build();
+    }
+
+    private CategoryDto mapToCategoryDto(Category category) {
+        return CategoryDto.builder()
+                .id(category.getId())
+                .name(category.getName())
+                .build();
+    }
+
+    private Comparator<Product> getComparator(String sort) {
+        if ("name".equalsIgnoreCase(sort)) {
+            return Comparator.comparing(Product::getName, String.CASE_INSENSITIVE_ORDER);
+        }
+
+        return Comparator.comparing(Product::getId);
+    }
+
+    private List<Category> getAllCategories(Category root) {
+        List<Category> result = new ArrayList<>();
+        result.add(root);
+
+        for (Category child : root.getChildren()) {
+            result.addAll(getAllCategories(child));
+        }
+        return result;
+    }
+
+
+
+    // get similar product method
+    @Transactional
+    public List<SimilarProductResponse> getSimilarProducts(UUID productId, Integer max, Integer offset, String sort, String order) {
+
+        max = (max == null || max <= 0) ? 10 : max;
+        offset = (offset == null || offset < 0) ? 0 : offset;
+        sort = (sort == null) ? "id" : sort;
+        order = (order == null) ? "asc" : order;
+
+        Product baseProduct = productRepository.findByIdAndIsDeletedFalse(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        if (!Boolean.TRUE.equals(baseProduct.getIsActive())) {
+            throw new InvalidRequestException("Product is not active");
+        }
+
+        Category category = baseProduct.getCategory();
+
+        if (category == null || Boolean.TRUE.equals(category.getIsDeleted())) {
+            throw new InvalidRequestException("Product category is invalid");
+        }
+
+        List<Category> categories = new ArrayList<>();
+        collectChildCategories(category, categories);
+
+        List<Product> products = productRepository.findValidProductsByCategories(categories);
+
+        if (products.isEmpty()) return List.of();
+
+        List<Product> filtered = products.stream()
+                .filter(p -> !p.getId().equals(productId)) // exclude current
+                .filter(p -> !productVariationRepository.findValidVariations(p).isEmpty())
+                .toList();
+
+        if (filtered.isEmpty()) return List.of();
+
+        Comparator<Product> comparator = getComparator(sort);
+
+        filtered = filtered.stream()
+                .sorted((p1, p2) -> {
+                    boolean p1SameBrand = Objects.equals(p1.getBrand(), baseProduct.getBrand());
+                    boolean p2SameBrand = Objects.equals(p2.getBrand(), baseProduct.getBrand());
+
+                    if (p1SameBrand && !p2SameBrand) return -1;
+                    if (!p1SameBrand && p2SameBrand) return 1;
+
+                    return comparator.compare(p1, p2);
+                })
+                .toList();
+
+        if ("desc".equalsIgnoreCase(order)) {
+            Collections.reverse(filtered);
+        }
+
+        int start = Math.min(offset, filtered.size());
+        int end = Math.min(start + max, filtered.size());
+
+        List<Product> paginated = filtered.subList(start, end);
+
+        return paginated.stream()
+                .map(p -> mapToSimilarProduct(
+                        p,
+                        productVariationRepository.findValidVariations(p)
+                ))
+                .toList();
+    }
+
+    private SimilarProductResponse mapToSimilarProduct(Product product, List<ProductVariation> variations) {
+        List<String> primaryImages = variations.stream()
+                .map(v -> {
+                    if (v.getPrimaryImageName() != null) {
+                        return v.getPrimaryImageName();
+                    } else if (v.getImages() != null && !v.getImages().isEmpty()) {
+                        return v.getImages().get(0).getImageName();
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        return SimilarProductResponse.builder()
+                .productId(product.getId())
+                .name(product.getName())
+                .brand(product.getBrand())
+                .category(mapToCategoryDto(product.getCategory()))
+                .primaryImages(primaryImages)
+                .build();
+    }
 
     // upload customer profile method
     public void uploadProfileImage(MultipartFile file) {

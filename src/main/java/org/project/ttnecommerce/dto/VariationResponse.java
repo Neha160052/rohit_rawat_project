@@ -12,4 +12,5 @@ public class VariationResponse {
     private Double price;
     private Integer quantity;
     private String primaryImage;
+    private String metadata;
 }
