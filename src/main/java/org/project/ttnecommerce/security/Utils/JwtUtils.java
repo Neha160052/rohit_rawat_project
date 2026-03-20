@@ -17,16 +17,16 @@ public class JwtUtils {
     @Value("${security.jwt.secret-key}")
     private String secretKey;
 
-    private final long EXPIRATION_TIME = 1000 * 60 * 15; // 15 minutes
+    private final long EXPIRATION_TIME = 1000 * 60 * 15;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
     public String generateToken(CustomUserDetails userDetails) {
-
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .claim("version", userDetails.getUser().getTokenVersion())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -35,6 +35,10 @@ public class JwtUtils {
 
     public String extractUsername(String token) {
         return extractAllClaims(token).getSubject();
+    }
+
+    public Integer extractTokenVersion(String token) {
+        return extractAllClaims(token).get("version", Integer.class);
     }
 
     public Date extractExpiration(String token) {

@@ -125,11 +125,10 @@ public class SellerController {
 
     @PatchMapping(value = "/update-product-variation", consumes = "multipart/form-data")
     public ResponseEntity<String> updateProductVariation(@ModelAttribute @Valid UpdateProductVariationRequest request,
-            Authentication authentication) {
+                                                         Authentication authentication) {
         String email = authentication.getName();
         String response = sellerService.updateProductVariation(request, email);
         return ResponseEntity.ok(response);
     }
 
 }
-

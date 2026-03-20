@@ -11,9 +11,7 @@ import java.io.IOException;
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
-    public void commence(HttpServletRequest request,
-                         HttpServletResponse response,
-                         AuthenticationException ex) throws IOException {
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException ex) throws IOException {
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
@@ -21,7 +19,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.getWriter().write("""
         {
           "error": "Unauthorized",
-          "message": "Invalid or missing token"
+          "message": "Authentication failed"
         }
         """);
     }

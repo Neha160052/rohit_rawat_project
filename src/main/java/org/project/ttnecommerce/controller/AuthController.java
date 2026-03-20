@@ -38,48 +38,58 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<LoginResponse> refreshToken(@CookieValue(name = "refreshToken") String refreshToken) {
+    public ResponseEntity<LoginResponse> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
         log.info("Refresh token API called");
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new InvalidToken("Refresh token missing");
+        }
+
         RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> {
                     log.warn("Invalid refresh token used");
                     return new InvalidToken("Invalid refresh token");
                 });
+
         refreshTokenService.verifyExpiration(token);
 
         String accessToken = jwtUtils.generateToken(new CustomUserDetails(token.getUser()));
-
         log.info("New access token generated for user: {}", token.getUser().getEmail());
         return ResponseEntity.ok(new LoginResponse(accessToken));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response, @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response, @RequestHeader(value = "Authorization", required = false) String authHeader) {
         log.info("Logout API called");
         String accessToken = null;
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             accessToken = authHeader.substring(7);
         }
+
+        String refreshToken = null;
+
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if ("refreshToken".equals(cookie.getName())) {
-                    String refreshToken = cookie.getValue();
-                    authService.logout(refreshToken, accessToken);
-                    ResponseCookie deleteCookie =
-                            ResponseCookie.from("refreshToken", "")
-                                    .httpOnly(true)
-                                    .secure(false)
-                                    .path("/")
-                                    .maxAge(0)
-                                    .sameSite("Strict")
-                                    .build();
-
-                    response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
-                    log.info("User logged out successfully");
+                    refreshToken = cookie.getValue();
+                    break;
                 }
             }
         }
+
+        authService.logout(refreshToken, accessToken);
+
+        ResponseCookie deleteCookie =
+                ResponseCookie.from("refreshToken", "")
+                        .httpOnly(true)
+                        .secure(false)
+                        .path("/")
+                        .maxAge(0)
+                        .sameSite("Strict")
+                        .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+        log.info("User logged out successfully");
         return ResponseEntity.ok("Logout successful");
     }
 }

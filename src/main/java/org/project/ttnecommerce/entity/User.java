@@ -55,6 +55,9 @@ public class User {
 
     private LocalDateTime passwordUpdateDate;
 
+    @Column(nullable = false)
+    private Integer tokenVersion = 0;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<UserRole> userRoles = new HashSet<>();
 

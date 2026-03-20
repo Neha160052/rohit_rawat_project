@@ -164,8 +164,8 @@ public class AdminService {
             throw new InvalidInputException("Field name cannot be empty");
 
         metadataRepository.findByNameIgnoreCaseAndIsDeletedFalse(fieldName).ifPresent(field -> {
-                    throw new InvalidRequestException("Metadata field already exists");
-                });
+            throw new InvalidRequestException("Metadata field already exists");
+        });
 
         CategoryMetadataField field = CategoryMetadataField.builder()
                 .name(fieldName)
@@ -214,8 +214,8 @@ public class AdminService {
                     .orElseThrow(() -> new InvalidRequestException("Parent category not found"));
 
             categoryRepository.findByNameIgnoreCaseAndParentCategoryIdAndIsDeletedFalse(name,parent.getId()).ifPresent(c -> {
-                        throw new InvalidRequestException("Category already exists under this parent");
-                    });
+                throw new InvalidRequestException("Category already exists under this parent");
+            });
 
             Category temp = parent;
 
@@ -454,8 +454,8 @@ public class AdminService {
 
     // getAll product method
     public ProductListResponse getAllProducts(Integer max, Integer offset, String sort, String order,
-            UUID sellerId, UUID categoryId,
-            UUID productId
+                                              UUID sellerId, UUID categoryId,
+                                              UUID productId
     ) {
 
         validateInputs(max, offset, sort, order, sellerId, categoryId, productId);

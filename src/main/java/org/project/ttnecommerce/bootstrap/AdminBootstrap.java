@@ -46,11 +46,8 @@ public class AdminBootstrap implements CommandLineRunner {
         UserRole userRole = new UserRole();
         userRole.setUser(admin);
         userRole.setRole(adminRole);
-
         admin.getUserRoles().add(userRole);
-
         userRepository.save(admin);
-
         System.out.println("Admin account has been created successfully");
     }
 }
