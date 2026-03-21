@@ -1,69 +1,136 @@
 package org.project.ttnecommerce.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.project.ttnecommerce.dto.*;
+import org.project.ttnecommerce.i18n.MessageTranslator;
 import org.project.ttnecommerce.service.SellerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/sellers")
 @RequiredArgsConstructor
 public class SellerController {
+
     private final SellerService sellerService;
+    private final MessageTranslator translator;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse> registerSeller(
-            @Valid @RequestBody RegisterSellerRequest request) {
+    public ResponseEntity<ApiResponse> registerSeller(@Valid @RequestBody RegisterSellerRequest request) {
+        log.info("Seller API called: Register seller | email={}", request.getEmail());
         sellerService.registerSeller(request);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(new ApiResponse("Seller registered successfully. Waiting for approval."));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(translator.get("response.seller.registered")));
     }
-
 
     @GetMapping("/profile")
     public ResponseEntity<SellerProfileResponse> getSellerProfile() {
+        log.info("Seller API called: Get seller profile");
         SellerProfileResponse response = sellerService.getSellerProfile();
         return ResponseEntity.ok(response);
     }
 
-
     @PatchMapping("/update-profile")
-    public ResponseEntity<String> updateSellerProfile(
-            @RequestBody SellerProfileUpdateRequest request) {
+    public ResponseEntity<String> updateSellerProfile(@RequestBody SellerProfileUpdateRequest request) {
+        log.info("Seller API called: Update seller profile");
         sellerService.updateSellerProfile(request);
-        return ResponseEntity.ok("Profile updated successfully");
+        return ResponseEntity.ok(translator.get("response.profile.updated"));
     }
 
-
     @PatchMapping("/change-password")
-    public ResponseEntity<String> updatePassword(
-            @Valid @RequestBody UpdatePasswordRequest request) {
-
+    public ResponseEntity<String> updatePassword(@Valid @RequestBody UpdatePasswordRequest request) {
+        log.info("Seller API called: Change seller password");
         sellerService.updateSellerPassword(request);
-
-        return ResponseEntity.ok("Password updated successfully");
+        return ResponseEntity.ok(translator.get("response.password.updated"));
     }
 
     @PatchMapping("/change-address/{addressId}")
-    public ResponseEntity<String> updateAddress(
-
-            @PathVariable UUID addressId,
-            @Valid @RequestBody UpdateAddressRequest request) {
-
+    public ResponseEntity<String> updateAddress(@PathVariable UUID addressId, @Valid @RequestBody UpdateAddressRequest request) {
+        log.info("Seller API called: Update address | addressId={}", addressId);
         sellerService.updateAddress(addressId, request);
-
-        return ResponseEntity.ok("Address updated successfully");
+        return ResponseEntity.ok(translator.get("response.address.updated"));
     }
 
     @PostMapping("/profile/image")
-    public ResponseEntity<String> uploadProfileImage(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<String> uploadProfileImage(
+            @RequestParam("file") MultipartFile file) {
+        log.info("Seller API called: Upload profile image");
         sellerService.uploadProfileImage(file);
-        return ResponseEntity.ok("Profile image uploaded successfully");
+        return ResponseEntity.ok(translator.get("response.profile.image.uploaded"));
     }
+
+    @GetMapping("/get-categories")
+    public ResponseEntity<List<SellerCategoryResponse>> getCategory() {
+        log.info("Seller API called: Get seller categories");
+        List<SellerCategoryResponse> response = sellerService.getCategory();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/add-products")
+    public ResponseEntity<String> addProduct(@Valid @RequestBody AddProductRequest request) {
+        String response = sellerService.addProduct(request);
+        return ResponseEntity.ok(translator.translate(response));
+    }
+
+
+    @PostMapping(value = "/add-product-variation", consumes = "multipart/form-data")
+    public ResponseEntity<String> addProductVariation(@ModelAttribute @Valid AddProductVariationRequest request) {
+        String response = sellerService.addProductVariation(request);
+        return ResponseEntity.ok(translator.translate(response));
+    }
+
+    @GetMapping("/get-products")
+    public ResponseEntity<List<SellerProductResponse>> getSellerProducts(
+            @Valid @ModelAttribute SellerProductFilterRequest request
+    ) {
+        return ResponseEntity.ok(sellerService.getSellerProducts(request));
+    }
+
+
+    @GetMapping("/products/{productId}/variations")
+    public ResponseEntity<VariationPageResponse> getVariations(
+            @PathVariable UUID productId,
+            @RequestParam(defaultValue = "10") Integer max,
+            @RequestParam(defaultValue = "0") Integer offset,
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(defaultValue = "asc") String order,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) UUID productVariationId
+    ) {
+
+        return ResponseEntity.ok(
+                sellerService.getVariations(
+                        productId, max, offset, sort, order, query, productVariationId
+                )
+        );
+    }
+
+    @DeleteMapping("/delete-product/{productId}")
+    public ResponseEntity<ApiResponse> deleteProduct(@PathVariable UUID productId) {
+        String response = sellerService.deleteProduct(productId);
+        return ResponseEntity.ok(new ApiResponse(translator.translate(response)));
+    }
+
+    @PatchMapping("/update-product")
+    public ResponseEntity<ApiResponse> updateProduct(
+            @RequestBody @Valid UpdateProductRequest request) {
+
+        String response = sellerService.updateProduct(request);
+        return ResponseEntity.ok(new ApiResponse(translator.translate(response)));
+    }
+
+    @PatchMapping(value = "/update-product-variation", consumes = "multipart/form-data")
+    public ResponseEntity<String> updateProductVariation(@ModelAttribute @Valid UpdateProductVariationRequest request,
+                                                         Authentication authentication) {
+        String email = authentication.getName();
+        String response = sellerService.updateProductVariation(request, email);
+        return ResponseEntity.ok(translator.translate(response));
+    }
+
 }

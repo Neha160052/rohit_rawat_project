@@ -1,5 +1,4 @@
 package org.project.ttnecommerce.dto;
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -11,26 +10,28 @@ import lombok.Setter;
 @Setter
 public class RegisterCustomerRequest {
 
-    @NotBlank
-    @Email
+    @NotBlank(message = "{validation.email.required}")
+    @Email(message = "{validation.email.invalid}")
     private String email;
 
-    @NotBlank
-    @Pattern(regexp = "^[0-9]{10}$")
+    @NotBlank(message = "{validation.phone.required}")
+    @Pattern(regexp = "^[0-9]{10}$", message = "{validation.phone.invalid}")
     private String phone;
 
-    @NotBlank
-    @Size(min = 8)
+    @NotBlank(message = "{validation.password.required}")
+    @Size(min = 8, max = 15, message = "{validation.password.size.8.15}")
+    @Pattern(
+            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,15}$",
+            message = "{validation.password.pattern.customer}"
+    )
     private String password;
 
-    @NotBlank
+    @NotBlank(message = "{validation.confirm.password.required}")
     private String confirmPassword;
 
-    @NotBlank
-    @Size(min = 2, max = 50)
+    @Pattern(regexp = "^[A-Za-z]+$", message = "{validation.first.name.alpha.only}")
     private String firstName;
 
-    @NotBlank
-    @Size(min = 2, max = 50)
+    @Pattern(regexp = "^[A-Za-z]+$", message = "{validation.last.name.alpha.only}")
     private String lastName;
 }

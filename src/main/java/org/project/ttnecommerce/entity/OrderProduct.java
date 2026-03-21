@@ -1,22 +1,21 @@
-/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
-import java.math.BigDecimal;
+import org.project.ttnecommerce.entity.base.Auditable;
+
 import java.util.UUID;
+
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "order_product")
-public class OrderProduct {
+@Builder
+public class OrderProduct extends Auditable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
-    private Integer quantity;
-    private BigDecimal price;
 
     @ManyToOne
     @JoinColumn(name = "order_id")
@@ -25,4 +24,8 @@ public class OrderProduct {
     @ManyToOne
     @JoinColumn(name = "product_variation_id")
     private ProductVariation productVariation;
-}*/
+
+    private Integer quantity;
+
+    private Double price;
+}

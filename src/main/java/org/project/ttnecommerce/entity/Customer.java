@@ -3,30 +3,23 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
+import org.project.ttnecommerce.entity.base.Auditable;
 
 import java.util.UUID;
 
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id"
-)
 @Entity
 @Table(name = "customer")
-public class Customer {
+@Getter
+@Setter
+public class Customer extends Auditable {
 
     @Id
     private UUID id;
+
     private String contact;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
     @MapsId
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
     private User user;
-
-
 }

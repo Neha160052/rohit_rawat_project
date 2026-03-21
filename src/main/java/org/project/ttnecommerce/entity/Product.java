@@ -1,41 +1,43 @@
-/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.HashSet;
-import java.util.Set;
+import org.project.ttnecommerce.entity.base.Auditable;
 import java.util.UUID;
+
 @Entity
+@Table(
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"seller_user_id","name","brand","category_id"}
+        ))
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Table(name = "product")
-public class Product {
+public class Product extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String name;
-    private String description;
-    private String brand;
-    private boolean isCancellable;
-    private boolean isReturnable;
-    private boolean isActive = true;
-    private boolean isDeleted = false;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_user_id")
-    private Seller seller;
+    private User seller;
+
+    @Column(nullable = false)
+    private String name;
+
+    private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private Set<ProductVariation> variations = new HashSet<>();
+    private Boolean isCancellable = false;
+    private Boolean isReturnable = false;
 
-    @OneToMany(mappedBy = "product")
-    private Set<ProductReview> reviews = new HashSet<>();
-}*/
+    private String brand;
+
+    private Boolean isActive = false;
+    private Boolean isDeleted = false;
+
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    private java.util.List<ProductVariation> variations = new java.util.ArrayList<>();
+}

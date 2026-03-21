@@ -1,28 +1,35 @@
-/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.project.ttnecommerce.entity.base.Auditable;
+
+import java.io.Serializable;
+import java.util.UUID;
+
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "cart")
-public class Cart {
-    @EmbeddedId
-    private CartId id;
-    private Integer quantity;
-    private boolean isWishlistItem = false;
+@Builder
+@Table(uniqueConstraints =
+@UniqueConstraint(columnNames = {"customer_user_id","product_variation_id"}))
+public class Cart extends Auditable{
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("customerUserId")
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne
     @JoinColumn(name = "customer_user_id")
-    private Customer customer;
+    private User customer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("productVariationId")
+    @ManyToOne
     @JoinColumn(name = "product_variation_id")
     private ProductVariation productVariation;
+
+    private Integer quantity;
+
+    private Boolean isWishlistItem = false;
 }
-*/

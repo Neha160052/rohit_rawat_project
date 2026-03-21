@@ -5,27 +5,23 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.UUID;
-@Getter
-@Setter
+
 @Entity
 @Table(name = "user_role",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"user_id", "role_id"})
-        })
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id","role_id"}))
+@Getter
+@Setter
 public class UserRole {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
-
 }

@@ -4,19 +4,15 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.project.ttnecommerce.entity.base.Auditable;
 
 import java.util.UUID;
+
 @Entity
 @Table(name = "seller")
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id"
-)
-public class Seller {
+public class Seller extends Auditable {
 
     @Id
     private UUID id;
@@ -24,6 +20,7 @@ public class Seller {
     private String gst;
     private String companyName;
     private String companyContact;
+
     private Boolean isApproved = false;
 
     @MapsId

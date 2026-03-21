@@ -1,32 +1,40 @@
-/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import org.project.ttnecommerce.entity.base.Auditable;
+
+import java.util.*;
 
 @Entity
+@Table(
+        name = "category",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"name", "parent_category_id"}
+        )
+)
 @Getter
 @Setter
-@NoArgsConstructor
+@Builder
 @AllArgsConstructor
-@Table(name = "categories")
-public class Category {
+@NoArgsConstructor
+public class Category extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(nullable = false)
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_category_id")
-    private Category parent;
+    private Category parentCategory;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
-    private Set<Category> subCategories = new HashSet<>();
+    @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Category> children = new ArrayList<>();
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
-    private Set<CategoryMetadataFieldValues> metadataValues = new HashSet<>();
-}*/
+    @OneToMany(mappedBy = "category")
+    private List<CategoryMetadataFieldValues> categoryMetadataFieldValues = new ArrayList<>();
+
+    private Boolean isDeleted = false;
+}

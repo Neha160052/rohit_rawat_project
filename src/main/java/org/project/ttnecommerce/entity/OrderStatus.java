@@ -1,26 +1,31 @@
-/*
 package org.project.ttnecommerce.entity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.project.ttnecommerce.Enum.OrderStatusEnum;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Table(name = "order_status")
 public class OrderStatus {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String status;
-    private LocalDateTime createdAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_product_id")
+    private OrderProduct orderProduct;
 
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    private Order order;
-}*/
+    @Enumerated(EnumType.STRING)
+    private OrderStatusEnum fromStatus;
+
+    @Enumerated(EnumType.STRING)
+    private OrderStatusEnum toStatus;
+
+    private String transitionNotes;
+
+    private LocalDateTime transitionDate;
+}

@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ResendActivationRequest {
-    @NotBlank
-    @Email
+    @NotBlank(message = "{validation.email.required}")
+    @Email(message = "{validation.email.invalid}")
     private String email;
 }

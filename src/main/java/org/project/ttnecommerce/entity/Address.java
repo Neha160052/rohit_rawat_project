@@ -1,23 +1,22 @@
 package org.project.ttnecommerce.entity;
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.project.ttnecommerce.entity.base.Auditable;
 
+import java.io.Serializable;
 import java.util.UUID;
 
+@Entity
+@Table(
+        name = "address",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id","label"})
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id"
-)@Entity
-@Table(name = "address")
-public class Address {
+public class Address extends Auditable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -30,7 +29,6 @@ public class Address {
     private String zipCode;
     private String label;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
