@@ -9,18 +9,18 @@ import lombok.*;
 @Builder
 public class UpdatePasswordRequest {
 
-    @NotBlank(message = "Current password is required")
-    @Size(min = 8, max = 15, message = "Password must be between 8 and 15 characters")
+    @NotBlank(message = "{validation.current.password.required}")
+    @Size(min = 8, max = 15, message = "{validation.password.size.8.15}")
     private String currentPassword;
 
-    @NotBlank(message = "New password is required")
-    @Size(min = 8, max = 15, message = "Password must be between 8 and 15 characters")
+    @NotBlank(message = "{validation.new.password.required}")
+    @Size(min = 8, max = 15, message = "{validation.password.size.8.15}")
     @Pattern(
             regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&+=!])[A-Za-z\\d@#$%^&+=!]+$",
-            message = "Password must contain uppercase, lowercase, digit and special character"
+            message = "{validation.password.pattern.general}"
     )
     private String newPassword;
 
-    @NotBlank(message = "Confirm password is required")
+    @NotBlank(message = "{validation.confirm.password.required.long}")
     private String confirmPassword;
 }

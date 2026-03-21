@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.util.List;
 
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -13,8 +14,5 @@ public class ApiResponse {
 
     private String message;
     private List<String> errors;
-
-    public ApiResponse(String message) {
-        this.message = message;
-    }
+    public ApiResponse(String message) { this.message = message; }
 }

@@ -8,7 +8,7 @@ import java.util.UUID;
 @Setter
 public class UpdateProductRequest {
 
-    @NotNull(message = "Product ID is mandatory")
+    @NotNull(message = "{validation.product.id.mandatory}")
     private UUID productId;
 
     private String name;

@@ -3,6 +3,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ttnecommerce.dto.*;
+import org.project.ttnecommerce.i18n.MessageTranslator;
 import org.project.ttnecommerce.service.SellerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,12 +20,13 @@ import java.util.UUID;
 public class SellerController {
 
     private final SellerService sellerService;
+    private final MessageTranslator translator;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> registerSeller(@Valid @RequestBody RegisterSellerRequest request) {
         log.info("Seller API called: Register seller | email={}", request.getEmail());
         sellerService.registerSeller(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Seller registered successfully. Waiting for approval."));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(translator.get("response.seller.registered")));
     }
 
     @GetMapping("/profile")
@@ -38,21 +40,21 @@ public class SellerController {
     public ResponseEntity<String> updateSellerProfile(@RequestBody SellerProfileUpdateRequest request) {
         log.info("Seller API called: Update seller profile");
         sellerService.updateSellerProfile(request);
-        return ResponseEntity.ok("Profile updated successfully");
+        return ResponseEntity.ok(translator.get("response.profile.updated"));
     }
 
     @PatchMapping("/change-password")
     public ResponseEntity<String> updatePassword(@Valid @RequestBody UpdatePasswordRequest request) {
         log.info("Seller API called: Change seller password");
         sellerService.updateSellerPassword(request);
-        return ResponseEntity.ok("Password updated successfully");
+        return ResponseEntity.ok(translator.get("response.password.updated"));
     }
 
     @PatchMapping("/change-address/{addressId}")
     public ResponseEntity<String> updateAddress(@PathVariable UUID addressId, @Valid @RequestBody UpdateAddressRequest request) {
         log.info("Seller API called: Update address | addressId={}", addressId);
         sellerService.updateAddress(addressId, request);
-        return ResponseEntity.ok("Address updated successfully");
+        return ResponseEntity.ok(translator.get("response.address.updated"));
     }
 
     @PostMapping("/profile/image")
@@ -60,7 +62,7 @@ public class SellerController {
             @RequestParam("file") MultipartFile file) {
         log.info("Seller API called: Upload profile image");
         sellerService.uploadProfileImage(file);
-        return ResponseEntity.ok("Profile image uploaded successfully");
+        return ResponseEntity.ok(translator.get("response.profile.image.uploaded"));
     }
 
     @GetMapping("/get-categories")
@@ -73,14 +75,14 @@ public class SellerController {
     @PostMapping("/add-products")
     public ResponseEntity<String> addProduct(@Valid @RequestBody AddProductRequest request) {
         String response = sellerService.addProduct(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(translator.translate(response));
     }
 
 
     @PostMapping(value = "/add-product-variation", consumes = "multipart/form-data")
     public ResponseEntity<String> addProductVariation(@ModelAttribute @Valid AddProductVariationRequest request) {
         String response = sellerService.addProductVariation(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(translator.translate(response));
     }
 
     @GetMapping("/get-products")
@@ -112,7 +114,7 @@ public class SellerController {
     @DeleteMapping("/delete-product/{productId}")
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable UUID productId) {
         String response = sellerService.deleteProduct(productId);
-        return ResponseEntity.ok(new ApiResponse(response));
+        return ResponseEntity.ok(new ApiResponse(translator.translate(response)));
     }
 
     @PatchMapping("/update-product")
@@ -120,7 +122,7 @@ public class SellerController {
             @RequestBody @Valid UpdateProductRequest request) {
 
         String response = sellerService.updateProduct(request);
-        return ResponseEntity.ok(new ApiResponse(response));
+        return ResponseEntity.ok(new ApiResponse(translator.translate(response)));
     }
 
     @PatchMapping(value = "/update-product-variation", consumes = "multipart/form-data")
@@ -128,7 +130,7 @@ public class SellerController {
                                                          Authentication authentication) {
         String email = authentication.getName();
         String response = sellerService.updateProductVariation(request, email);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(translator.translate(response));
     }
 
 }

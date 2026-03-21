@@ -8,12 +8,12 @@ import lombok.Setter;
 @Setter
 public class UpdateCustomerProfileRequest {
 
-    @Pattern(regexp = "^[A-Za-z]{2,50}$", message = "First name must be 2-50 alphabets")
+    @Pattern(regexp = "^[A-Za-z]{2,50}$", message = "{validation.first.name.range}")
     private String firstName;
 
-    @Pattern(regexp = "^[A-Za-z]{2,50}$", message = "Last name must be 2-50 alphabets")
+    @Pattern(regexp = "^[A-Za-z]{2,50}$", message = "{validation.last.name.range}")
     private String lastName;
 
-    @Pattern(regexp = "^[0-9]{10}$", message = "Phone must be a valid 10 digit number")
+    @Pattern(regexp = "^[0-9]{10}$", message = "{validation.phone.valid}")
     private String contact;
 }

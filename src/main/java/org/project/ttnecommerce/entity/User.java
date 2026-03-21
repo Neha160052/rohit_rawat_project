@@ -3,6 +3,8 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
+import org.project.ttnecommerce.entity.base.Auditable;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +20,7 @@ import java.util.UUID;
 )
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

@@ -3,6 +3,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ttnecommerce.dto.*;
+import org.project.ttnecommerce.i18n.MessageTranslator;
 import org.project.ttnecommerce.service.AdminService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class AdminController {
 
     private final AdminService adminService;
+    private final MessageTranslator translator;
 
     @GetMapping("/customers")
     public ResponseEntity<List<AdminCustomerResponse>> getAllCustomers(
@@ -54,7 +56,8 @@ public class AdminController {
             @PathVariable UUID id,
             @Valid @RequestBody StatusUpdateRequest request) {
 
-        return ResponseEntity.ok(adminService.updateCustomerStatus(id, request.getStatus()));
+        MessageResponse response = adminService.updateCustomerStatus(id, request.getStatus());
+        return ResponseEntity.ok(new MessageResponse(translator.translate(response.getMessage())));
     }
 
     @PatchMapping("/sellers/{id}")
@@ -62,16 +65,15 @@ public class AdminController {
             @PathVariable UUID id,
             @Valid @RequestBody StatusUpdateRequest request) {
 
-        return ResponseEntity.ok(
-                adminService.updateSellerStatus(id, request.getStatus())
-        );
+        MessageResponse response = adminService.updateSellerStatus(id, request.getStatus());
+        return ResponseEntity.ok(new MessageResponse(translator.translate(response.getMessage())));
     }
 
     @PostMapping("/add-metadata-field")
     public ResponseEntity<ApiResponse> addMetadataField(@Valid @RequestBody AddMetadataFieldRequest request) {
         log.info("Admin API called: Add metadata field | name={}", request.getName());
         String message = adminService.addMetadataField(request);
-        return ResponseEntity.ok(new ApiResponse(message));
+        return ResponseEntity.ok(new ApiResponse(translator.translate(message)));
     }
 
     @GetMapping("/get-metadata-field")
@@ -88,11 +90,17 @@ public class AdminController {
     }
 
     @PostMapping("/add-category")
-    public ResponseEntity<ApiResponse> addCategory(@Valid @RequestBody AddCategoryRequest request) {
+    public ResponseEntity<CategoryCreateResponse> addCategory(
+            @Valid @RequestBody AddCategoryRequest request) {
+
         log.info("Admin API called: Add category | name={} parentId={}",
                 request.getName(), request.getParentId());
-        String message = adminService.addCategory(request);
-        return ResponseEntity.ok(new ApiResponse(message));
+
+        UUID id = adminService.addCategory(request);
+
+        return ResponseEntity.ok(
+                new CategoryCreateResponse("Category created successfully", id)
+        );
     }
 
     @GetMapping("/get-categories")
@@ -115,7 +123,7 @@ public class AdminController {
     public ResponseEntity<ApiResponse> updateCategory(@RequestBody UpdateCategoryRequest request) {
         log.info("Admin API called: Update category | categoryId={}", request.getId());
         String message = adminService.updateCategory(request);
-        return ResponseEntity.ok(new ApiResponse(message));
+        return ResponseEntity.ok(new ApiResponse(translator.translate(message)));
     }
 
     @PostMapping("/add-category/metadata")
@@ -123,7 +131,7 @@ public class AdminController {
             @RequestBody AddCategoryMetadataRequest request) {
         log.info("Admin API called: Add category metadata | categoryId={}", request.getCategoryId());
         String message = adminService.addCategoryMetadata(request);
-        return ResponseEntity.ok(new ApiResponse(message));
+        return ResponseEntity.ok(new ApiResponse(translator.translate(message)));
     }
 
     @GetMapping("/get-products")
@@ -147,6 +155,6 @@ public class AdminController {
 
     @PutMapping("/product-status")
     public ResponseEntity<String> updateProductStatus(@Valid @RequestBody ProductStatusUpdateRequest request) {
-        return ResponseEntity.ok(adminService.updateProductStatus(request));
+        return ResponseEntity.ok(translator.translate(adminService.updateProductStatus(request)));
     }
 }

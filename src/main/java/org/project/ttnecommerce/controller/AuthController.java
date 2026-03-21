@@ -9,6 +9,7 @@ import org.project.ttnecommerce.dto.LoginRequest;
 import org.project.ttnecommerce.dto.LoginResponse;
 import org.project.ttnecommerce.entity.RefreshToken;
 import org.project.ttnecommerce.exception.InvalidToken;
+import org.project.ttnecommerce.i18n.MessageTranslator;
 import org.project.ttnecommerce.security.CustomUserDetails;
 import org.project.ttnecommerce.security.Utils.JwtUtils;
 import org.project.ttnecommerce.service.AuthService;
@@ -29,6 +30,7 @@ public class AuthController {
     private final JwtUtils jwtUtils;
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
+    private final MessageTranslator translator;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request, HttpServletResponse response) {
@@ -90,6 +92,6 @@ public class AuthController {
                         .build();
         response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
         log.info("User logged out successfully");
-        return ResponseEntity.ok("Logout successful");
+        return ResponseEntity.ok(translator.get("response.logout.success"));
     }
 }

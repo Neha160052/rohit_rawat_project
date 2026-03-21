@@ -7,6 +7,7 @@ import org.project.ttnecommerce.entity.*;
 import org.project.ttnecommerce.exception.*;
 import org.project.ttnecommerce.repository.*;
 import org.project.ttnecommerce.security.CustomUserDetails;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,7 +45,7 @@ public class CustomerService {
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             log.warn("Customer registration failed - password mismatch | email={}", request.getEmail());
-            throw new PasswordMismatchException("Passwords do not match");
+            throw new PasswordMismatchException("Passwords and Confirm Password do not match");
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -52,7 +53,8 @@ public class CustomerService {
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
-        Role customerRole = roleRepository.findByAuthority("ROLE_CUSTOMER").orElseThrow(() -> new RuntimeException("Customer role not found"));
+        Role customerRole = roleRepository.findByAuthority("ROLE_CUSTOMER")
+                .orElseThrow(() -> new RuntimeException("Customer role not found"));
 
         User user = new User();
         user.setEmail(request.getEmail());
@@ -85,7 +87,7 @@ public class CustomerService {
         activationToken.setExpiryDate(LocalDateTime.now().plusHours(3));
         activationTokenRepository.save(activationToken);
         log.info("EMAIL METHOD CALLED");
-        emailService.sendActivationEmail(user.getEmail(), token);
+        emailService.sendActivationEmail(user.getEmail(), token, LocaleContextHolder.getLocale());
         log.info("Customer registered successfully | email={}", user.getEmail());
     }
 
@@ -94,6 +96,10 @@ public class CustomerService {
     public void activateCustomer(String token) {
         log.info("Customer activation requested");
         ActivationToken activationToken = activationTokenRepository.findByToken(token).orElseThrow(() -> new InvalidRequestException("Invalid activation token"));
+
+        if (token == null || token.trim().isEmpty()) {
+            throw new InvalidRequestException("Activation token is required");
+        }
 
         if (activationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
             log.warn("Activation token expired");
@@ -126,7 +132,7 @@ public class CustomerService {
         activationToken.setUser(user);
         activationToken.setExpiryDate(LocalDateTime.now().plusHours(3));
         activationTokenRepository.save(activationToken);
-        emailService.sendActivationEmail(user.getEmail(), token);
+        emailService.sendActivationEmail(user.getEmail(), token, LocaleContextHolder.getLocale());
     }
 
 
@@ -311,7 +317,7 @@ public class CustomerService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        emailService.sendPasswordChangeEmail(user);
+        emailService.sendPasswordChangeEmail(user, LocaleContextHolder.getLocale());
     }
 
 

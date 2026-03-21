@@ -11,21 +11,21 @@ import java.util.UUID;
 @Setter
 public class AddProductVariationRequest {
 
-    @NotNull(message = "Product Id is mandatory")
+    @NotNull(message = "{validation.product.id.required}")
     private UUID productId;
 
-    @NotNull(message = "Quantity is mandatory")
-    @Min(value = 0, message = "Quantity cannot be negative")
+    @NotNull(message = "{validation.quantity.required}")
+    @Min(value = 0, message = "{validation.quantity.min}")
     private Integer quantityAvailable;
 
-    @NotNull(message = "Price is mandatory")
-    @Min(value = 0, message = "Price cannot be negative")
+    @NotNull(message = "{validation.price.required}")
+    @Min(value = 0, message = "{validation.price.min}")
     private Double price;
 
-    @NotNull(message = "Metadata is mandatory")
+    @NotNull(message = "{validation.metadata.required}")
     private String metadata;
 
-    @NotNull(message = "Primary image is mandatory")
+    @NotNull(message = "{validation.primary.image.required}")
     private MultipartFile primaryImage;
 
     private List<MultipartFile> secondaryImages;

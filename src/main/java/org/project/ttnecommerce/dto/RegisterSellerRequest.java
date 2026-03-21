@@ -8,45 +8,45 @@ import lombok.Setter;
 @Setter
 public class RegisterSellerRequest {
 
-    @NotBlank(message = "Email is mandatory")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "{validation.email.required.mandatory}")
+    @Email(message = "{validation.email.invalid}")
     private String email;
 
-    @NotBlank(message = "Password is mandatory")
-    @Size(min = 8, max = 20, message = "Password must be between 8 and 20 characters")
+    @NotBlank(message = "{validation.password.required.mandatory}")
+    @Size(min = 8, max = 20, message = "{validation.password.size.8.20}")
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%^&+=!]).*$",
-            message = "Password must contain uppercase, lowercase, digit and special character"
+            message = "{validation.password.pattern.general}"
     )
     private String password;
 
-    @NotBlank(message = "Confirm password is mandatory")
+    @NotBlank(message = "{validation.confirm.password.required.mandatory}")
     private String confirmPassword;
 
-    @NotBlank(message = "GST is mandatory")
+    @NotBlank(message = "{validation.gst.required}")
     @Pattern(
             regexp = "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$",
-            message = "Invalid GST format"
+            message = "{validation.gst.invalid}"
     )
     private String gst;
 
-    @NotBlank(message = "Company name is mandatory")
-    @Size(min = 2, max = 100, message = "Company name must be between 2 and 100 characters")
+    @NotBlank(message = "{validation.company.name.required}")
+    @Size(min = 2, max = 100, message = "{validation.company.name.size}")
     private String companyName;
 
-    @NotBlank(message = "Company contact is mandatory")
-    @Pattern(regexp = "^[0-9]{10}$", message = "Phone must be 10 digits")
+    @NotBlank(message = "{validation.company.contact.required}")
+    @Pattern(regexp = "^[0-9]{10}$", message = "{validation.company.contact.invalid}")
     private String companyContact;
 
-    @NotBlank(message = "First name is mandatory")
-    @Pattern(regexp = "^[A-Za-z]{2,50}$", message = "First name must contain only alphabets")
+    @NotBlank(message = "{validation.first.name.required}")
+    @Pattern(regexp = "^[A-Za-z]{2,50}$", message = "{validation.first.name.alpha}")
     private String firstName;
 
-    @NotBlank(message = "Last name is mandatory")
-    @Pattern(regexp = "^[A-Za-z]{2,50}$", message = "Last name must contain only alphabets")
+    @NotBlank(message = "{validation.last.name.required}")
+    @Pattern(regexp = "^[A-Za-z]{2,50}$", message = "{validation.last.name.alpha}")
     private String lastName;
 
     @Valid
-    @NotNull(message = "Address is mandatory")
+    @NotNull(message = "{validation.address.required}")
     private AddressRequest address;
 }

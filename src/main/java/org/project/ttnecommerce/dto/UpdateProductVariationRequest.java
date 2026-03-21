@@ -10,7 +10,7 @@ import java.util.UUID;
 @Setter
 public class UpdateProductVariationRequest {
 
-    @NotNull(message = "Variation ID cannot be null")
+    @NotNull(message = "{validation.variation.id.required}")
     private UUID variationId;
 
     private Double price;

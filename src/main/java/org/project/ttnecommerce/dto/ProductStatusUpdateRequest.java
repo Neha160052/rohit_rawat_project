@@ -9,9 +9,9 @@ import java.util.UUID;
 @Setter
 public class ProductStatusUpdateRequest {
 
-    @NotNull(message = "Product ID is required")
+    @NotNull(message = "{validation.product.id.required.generic}")
     private UUID productId;
 
-    @NotNull(message = "Action is required")
+    @NotNull(message = "{validation.action.required}")
     private ProductAction action;
 }

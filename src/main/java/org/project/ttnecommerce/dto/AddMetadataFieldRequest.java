@@ -10,11 +10,11 @@ import lombok.Setter;
 @Setter
 public class AddMetadataFieldRequest {
 
-    @NotBlank(message = "Field name is mandatory")
-    @Size(min = 2, max = 50, message = "Field name must be between 2 and 50 characters")
+    @NotBlank(message = "{validation.field.name.required}")
+    @Size(min = 2, max = 50, message = "{validation.field.name.size}")
     @Pattern(
             regexp = "^[a-zA-Z][a-zA-Z0-9 ]*$",
-            message = "Field name must start with a letter and contain only alphabets, numbers and spaces"
+            message = "{validation.field.name.pattern}"
     )
     private String name;
 }

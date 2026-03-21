@@ -4,10 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ttnecommerce.entity.Product;
 import org.project.ttnecommerce.entity.User;
+import org.project.ttnecommerce.i18n.MessageTranslator;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.util.Locale;
 
 @Slf4j
 @Service
@@ -15,72 +18,68 @@ import org.springframework.stereotype.Service;
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final MessageTranslator translator;
 
     @Async
-    public void sendActivationEmail(String email, String token) {
+    public void sendActivationEmail(String email, String token, Locale locale) {
         String activationLink = "http://localhost:8080/api/customers/activate-customer?token=" + token;
-        String subject = "Activate your account";
-        String message = "Welcome!\n\n" +
-                "Click the link below to activate your account:\n\n" + activationLink +
-                "\n\nThis link will expire in 3 hours.";
+        String subject = translate(locale, "email.activation.subject");
+        String message = translate(locale, "email.activation.body", activationLink);
 
         sendEmail(email, subject, message);
     }
 
     @Async
-    public void sendResetPasswordEmail(String email, String token) {
+    public void sendResetPasswordEmail(String email, String token, Locale locale) {
         String resetLink = "http://localhost:8080/auth/reset-password?token=" + token;
-        String subject = "Reset Your Password";
-        String message = "We received a request to reset your password.\n\n" +
-                "Click the link below to reset it:\n\n" +
-                resetLink + "\n\nThis link will expire in 15 minutes.\n\n" +
-                "If you did not request this, please ignore this email.";
+        String subject = translate(locale, "email.reset.subject");
+        String message = translate(locale, "email.reset.body", resetLink);
 
         sendEmail(email, subject, message);
     }
 
     @Async
-    public void sendAccountLockedEmail(String email) {
+    public void sendAccountLockedEmail(String email, Locale locale) {
         sendEmail(
                 email,
-                "Account Locked",
-                "Your account has been locked due to multiple failed login attempts."
+                translate(locale, "email.account.locked.subject"),
+                translate(locale, "email.account.locked.body")
         );
     }
 
     @Async
-    public void sendCustomerDeactivationEmailByAdmin(User user) {
+    public void sendCustomerDeactivationEmailByAdmin(User user, Locale locale) {
         sendEmail(
                 user.getEmail(),
-                "Account Deactivated",
-                "Hello " + user.getFirstName() + ",\n\nYour account has been deactivated by the Admin."
+                translate(locale, "email.account.deactivated.subject"),
+                translate(locale, "email.account.deactivated.body", user.getFirstName())
         );
     }
 
     @Async
-    public void sendSellerActivationEmailByAdmin(User user) {
+    public void sendSellerActivationEmailByAdmin(User user, Locale locale) {
         sendEmail(
                 user.getEmail(),
-                "Account Activated",
-                "Hello " + user.getFirstName() + ",\n\nYour seller account has been activated by the admin."
+                translate(locale, "email.seller.activated.subject"),
+                translate(locale, "email.seller.activated.body", user.getFirstName())
         );
     }
 
     @Async
-    public void sendSellerDeactivationEmailByAdmin(User user) {
+    public void sendSellerDeactivationEmailByAdmin(User user, Locale locale) {
         sendEmail(
                 user.getEmail(),
-                "Account Deactivated",
-                "Hello " + user.getFirstName() + ",\n\nYour seller account has been deactivated by the Admin."
+                translate(locale, "email.account.deactivated.subject"),
+                translate(locale, "email.seller.deactivated.body", user.getFirstName())
         );
     }
 
     @Async
-    public void sendPasswordChangeEmail(User user) {
+    public void sendPasswordChangeEmail(User user, Locale locale) {
         sendEmail(
                 user.getEmail(),
-                "Password Updated Successfully",
-                "Hello " + user.getFirstName() + ", your password has been changed successfully."
+                translate(locale, "email.password.updated.subject"),
+                translate(locale, "email.password.updated.body", user.getFirstName())
         );
     }
 
@@ -102,17 +101,17 @@ public class EmailService {
         }
     }
 
-    public void sendCustomerActivationEmailByAdmin(User user) {
+    public void sendCustomerActivationEmailByAdmin(User user, Locale locale) {
         sendEmail(
                 user.getEmail(),
-                "Account Activated",
-                "Hello " + user.getFirstName() + ",\n\nYour account has been successfully activated by the admin."
+                translate(locale, "email.account.activated.subject"),
+                translate(locale, "email.account.activated.body", user.getFirstName())
         );
     }
 
 
     @Async
-    public void sendProductActivationEmail(Product product) {
+    public void sendProductActivationEmail(Product product, Locale locale) {
 
         if (product == null || product.getSeller() == null) {
             return;
@@ -127,20 +126,14 @@ public class EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
 
         message.setTo(seller.getEmail());
-        message.setSubject("Product Activated");
-
-        message.setText(
-                "Hello " + seller.getFirstName() + ",\n\n" +
-                        "Your product \"" + product.getName() + "\" has been ACTIVATED by admin.\n\n" +
-                        "It is now visible to customers.\n\n" +
-                        "Regards,\nEcommerce Team"
-        );
+        message.setSubject(translate(locale, "email.product.activated.subject"));
+        message.setText(translate(locale, "email.product.activated.body", seller.getFirstName(), product.getName()));
 
         mailSender.send(message);
     }
 
     @Async
-    public void sendProductDeactivationEmail(Product product) {
+    public void sendProductDeactivationEmail(Product product, Locale locale) {
 
         if (product == null || product.getSeller() == null) {
             return;
@@ -155,16 +148,14 @@ public class EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
 
         message.setTo(seller.getEmail());
-        message.setSubject("Product Deactivated");
-
-        message.setText(
-                "Hello " + seller.getFirstName() + ",\n\n" +
-                        "Your product \"" + product.getName() + "\" has been DEACTIVATED by admin.\n\n" +
-                        "It is no longer visible to customers.\n\n" +
-                        "Regards,\nEcommerce Team"
-        );
+        message.setSubject(translate(locale, "email.product.deactivated.subject"));
+        message.setText(translate(locale, "email.product.deactivated.body", seller.getFirstName(), product.getName()));
 
         mailSender.send(message);
+    }
+
+    private String translate(Locale locale, String code, Object... args) {
+        return translator.getOrDefault(locale, code, code, args);
     }
 
 

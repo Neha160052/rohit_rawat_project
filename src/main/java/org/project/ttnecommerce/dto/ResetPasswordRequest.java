@@ -6,12 +6,12 @@ import lombok.Setter;
 @Setter
 public class ResetPasswordRequest {
 
-    @NotBlank
+    @NotBlank(message = "{validation.token.required}")
     private String token;
 
-    @NotBlank
+    @NotBlank(message = "{validation.password.required}")
     private String password;
 
-    @NotBlank
+    @NotBlank(message = "{validation.confirm.password.required}")
     private String confirmPassword;
 }

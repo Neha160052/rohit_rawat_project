@@ -10,28 +10,28 @@ import lombok.Setter;
 @Setter
 public class RegisterCustomerRequest {
 
-    @NotBlank
-    @Email
+    @NotBlank(message = "{validation.email.required}")
+    @Email(message = "{validation.email.invalid}")
     private String email;
 
-    @NotBlank
-    @Pattern(regexp = "^[0-9]{10}$")
+    @NotBlank(message = "{validation.phone.required}")
+    @Pattern(regexp = "^[0-9]{10}$", message = "{validation.phone.invalid}")
     private String phone;
 
-    @NotBlank
-    @Size(min = 8, max = 15)
+    @NotBlank(message = "{validation.password.required}")
+    @Size(min = 8, max = 15, message = "{validation.password.size.8.15}")
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,15}$",
-            message = "Password must be 8-20 chars with uppercase, lowercase, digit and special character"
+            message = "{validation.password.pattern.customer}"
     )
     private String password;
 
-    @NotBlank
+    @NotBlank(message = "{validation.confirm.password.required}")
     private String confirmPassword;
 
-    @Pattern(regexp = "^[A-Za-z]+$", message = "First name should contain only alphabets")
+    @Pattern(regexp = "^[A-Za-z]+$", message = "{validation.first.name.alpha.only}")
     private String firstName;
 
-    @Pattern(regexp = "^[A-Za-z]+$", message = "Last name should contain only alphabets")
+    @Pattern(regexp = "^[A-Za-z]+$", message = "{validation.last.name.alpha.only}")
     private String lastName;
 }

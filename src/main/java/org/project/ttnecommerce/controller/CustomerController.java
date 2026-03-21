@@ -1,8 +1,9 @@
 package org.project.ttnecommerce.controller;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.project.ttnecommerce.dto.*;
+import org.project.ttnecommerce.i18n.MessageTranslator;
 import org.project.ttnecommerce.service.CustomerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,32 +15,33 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 @RequestMapping("/api/customers")
 public class CustomerController {
 
-    private CustomerService customerService;
+    private final CustomerService customerService;
+    private final MessageTranslator translator;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> registerCustomer(@Valid @RequestBody RegisterCustomerRequest request) {
         log.info("Customer API called: Register customer | email={}", request.getEmail());
         customerService.registerCustomer(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse("Customer registered successfully"));
+                .body(new ApiResponse(translator.get("response.customer.registered")));
     }
 
     @PutMapping("/activate-customer")
     public ResponseEntity<ApiResponse> activateCustomer(@RequestParam String token) {
         log.info("Customer API called: Activate customer account");
         customerService.activateCustomer(token);
-        return ResponseEntity.ok(new ApiResponse("Customer account activated successfully"));
+        return ResponseEntity.ok(new ApiResponse(translator.get("response.customer.activated")));
     }
 
     @PostMapping("/resend-activation-link")
     public ResponseEntity<ApiResponse> resendActivationLink(@Valid @RequestBody ResendActivationRequest request) {
         log.info("Customer API called: Resend activation link | email={}", request.getEmail());
         customerService.resendActivationLink(request.getEmail());
-        return ResponseEntity.ok(new ApiResponse("Activation link sent successfully"));
+        return ResponseEntity.ok(new ApiResponse(translator.get("response.activation.link.sent")));
     }
 
     @GetMapping("/profile")
@@ -53,14 +55,14 @@ public class CustomerController {
     public ResponseEntity<ApiResponse> updateCustomerProfile(@Valid @RequestBody UpdateCustomerProfileRequest request) {
         log.info("Customer API called: Update profile");
         customerService.updateCustomerProfile(request);
-        return ResponseEntity.ok(new ApiResponse("Profile updated successfully"));
+        return ResponseEntity.ok(new ApiResponse(translator.get("response.profile.updated")));
     }
 
     @PostMapping("/add-address")
     public ResponseEntity<String> addAddress(@Valid @RequestBody AddAddressRequest request) {
         log.info("Customer API called: Add address");
         customerService.addAddress(request);
-        return ResponseEntity.ok("Address added successfully");
+        return ResponseEntity.ok(translator.get("response.address.added"));
     }
 
     @GetMapping("/get-addresses")
@@ -73,28 +75,28 @@ public class CustomerController {
     public ResponseEntity<ApiResponse> changePassword(@Valid @RequestBody UpdatePasswordRequest request) {
         log.info("Customer API called: Change password");
         customerService.changePassword(request);
-        return ResponseEntity.ok(new ApiResponse("Password updated successfully"));
+        return ResponseEntity.ok(new ApiResponse(translator.get("response.password.updated")));
     }
 
     @DeleteMapping("/address/{addressId}")
     public ResponseEntity<ApiResponse> deleteAddress(@PathVariable UUID addressId) {
         log.info("Customer API called: Delete address | addressId={}", addressId);
         customerService.deleteAddress(addressId);
-        return ResponseEntity.ok(new ApiResponse("Address deleted successfully"));
+        return ResponseEntity.ok(new ApiResponse(translator.get("response.address.deleted")));
     }
 
     @PatchMapping("/address/{addressId}")
     public ResponseEntity<ApiResponse> updateAddress(@PathVariable UUID addressId, @Valid @RequestBody UpdateAddressRequest request) {
         log.info("Customer API called: Update address | addressId={}", addressId);
         customerService.updateAddress(addressId, request);
-        return ResponseEntity.ok(new ApiResponse("Address updated successfully"));
+        return ResponseEntity.ok(new ApiResponse(translator.get("response.address.updated")));
     }
 
     @PostMapping("/profile/image")
     public ResponseEntity<String> uploadProfileImage(@RequestParam("file") MultipartFile file) {
         log.info("Customer API called: Upload profile image");
         customerService.uploadProfileImage(file);
-        return ResponseEntity.ok("Profile image uploaded successfully");
+        return ResponseEntity.ok(translator.get("response.profile.image.uploaded"));
     }
 
     @GetMapping("/get-categories")

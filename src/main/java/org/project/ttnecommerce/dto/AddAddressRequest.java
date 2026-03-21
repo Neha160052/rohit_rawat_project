@@ -8,27 +8,27 @@ import lombok.*;
 @NoArgsConstructor
 public class AddAddressRequest {
 
-    @NotBlank(message = "Address cannot be empty")
-    @Size(min = 2, max = 255, message = "Address must be between 5 and 255 characters")
+    @NotBlank(message = "{validation.address.empty}")
+    @Size(min = 2, max = 255, message = "{validation.address.size}")
     private String addressLine;
 
-    @NotBlank(message = "City cannot be empty")
-    @Pattern(regexp = "^[A-Za-z ]{2,50}$", message = "City must contain only alphabets")
+    @NotBlank(message = "{validation.city.empty}")
+    @Pattern(regexp = "^[A-Za-z ]{2,50}$", message = "{validation.city.alpha}")
     private String city;
 
-    @NotBlank(message = "State cannot be empty")
-    @Pattern(regexp = "^[A-Za-z ]{2,50}$", message = "State must contain only alphabets")
+    @NotBlank(message = "{validation.state.empty}")
+    @Pattern(regexp = "^[A-Za-z ]{2,50}$", message = "{validation.state.alpha}")
     private String state;
 
-    @NotBlank(message = "Country cannot be empty")
-    @Pattern(regexp = "^[A-Za-z ]{2,50}$", message = "Country must contain only alphabets")
+    @NotBlank(message = "{validation.country.empty}")
+    @Pattern(regexp = "^[A-Za-z ]{2,50}$", message = "{validation.country.alpha}")
     private String country;
 
-    @NotBlank(message = "Zip code cannot be empty")
-    @Pattern(regexp = "^[1-9][0-9]{5}$", message = "Zip code must be 6 digits and cannot start with 0")
+    @NotBlank(message = "{validation.zip.empty}")
+    @Pattern(regexp = "^[1-9][0-9]{5}$", message = "{validation.zip.invalid}")
     private String zipCode;
 
-    @NotBlank(message = "Label cannot be empty")
-    @Pattern(regexp = "^(HOME|WORK|OTHER)$", message = "Label must be HOME, WORK or OTHER")
+    @NotBlank(message = "{validation.label.empty}")
+    @Pattern(regexp = "^(HOME|WORK|OTHER)$", message = "{validation.label.invalid.enum}")
     private String label;
 }

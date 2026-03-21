@@ -8,22 +8,22 @@ import java.util.UUID;
 @Setter
 public class ProductFilterRequest {
 
-    @Min(value = 1, message = "Max must be at least 1")
-    @Max(value = 100, message = "Max cannot exceed 100")
+    @Min(value = 1, message = "{validation.max.min}")
+    @Max(value = 100, message = "{validation.max.max}")
     private Integer max = 10;
 
-    @Min(value = 0, message = "Offset cannot be negative")
+    @Min(value = 0, message = "{validation.offset.min}")
     private Integer offset = 0;
 
     @Pattern(
             regexp = "id|name|brand",
-            message = "Sort must be one of: id, name, brand"
+            message = "{validation.sort.customer}"
     )
     private String sort = "id";
 
     @Pattern(
             regexp = "(?i)asc|desc",
-            message = "Order must be either asc or desc"
+            message = "{validation.order}"
     )
     private String order = "asc";
 

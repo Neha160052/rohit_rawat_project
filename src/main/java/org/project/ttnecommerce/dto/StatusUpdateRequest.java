@@ -8,6 +8,6 @@ import org.project.ttnecommerce.Enum.UserStatus;
 @Setter
 public class StatusUpdateRequest {
 
-    @NotNull(message = "Status is required")
+    @NotNull(message = "{validation.status.required}")
     private UserStatus status;
 }

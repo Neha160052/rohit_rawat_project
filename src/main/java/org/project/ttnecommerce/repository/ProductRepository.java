@@ -49,4 +49,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
     AND p.isActive = true
 """)
     List<Product> findValidProductsByCategories(@Param("categories") List<Category> categories);
+
+
 }

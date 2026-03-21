@@ -11,7 +11,7 @@ import java.util.UUID;
 @Builder
 public class ProductDetailResponse {
 
-    @NotNull(message = "Product ID is mandatory")
+    @NotNull(message = "{validation.product.id.mandatory}")
     private UUID productId;
     private String name;
     private String description;

@@ -9,6 +9,7 @@ import org.project.ttnecommerce.exception.InvalidRequestException;
 import org.project.ttnecommerce.exception.ResourceNotFoundException;
 import org.project.ttnecommerce.repository.*;
 import org.project.ttnecommerce.specification.AdminProductSpecification;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,7 +92,7 @@ public class AdminService {
                     return new MessageResponse("Customer already active");
                 }
                 user.setIsActive(true);
-                emailService.sendCustomerActivationEmailByAdmin(user);
+                emailService.sendCustomerActivationEmailByAdmin(user, LocaleContextHolder.getLocale());
                 return new MessageResponse("Customer activated successfully");
 
 
@@ -100,7 +101,7 @@ public class AdminService {
                     return new MessageResponse("Customer already deactivated");
                 }
                 user.setIsActive(false);
-                emailService.sendCustomerDeactivationEmailByAdmin(user);
+                emailService.sendCustomerDeactivationEmailByAdmin(user, LocaleContextHolder.getLocale());
                 return new MessageResponse("Customer deactivated successfully");
 
 
@@ -138,7 +139,7 @@ public class AdminService {
                 }
                 user.setIsActive(true);
                 seller.setIsApproved(true);
-                emailService.sendSellerActivationEmailByAdmin(user);
+                emailService.sendSellerActivationEmailByAdmin(user, LocaleContextHolder.getLocale());
                 return new MessageResponse("Seller activated successfully");
 
             case DEACTIVATE:
@@ -148,7 +149,7 @@ public class AdminService {
                 }
                 user.setIsActive(false);
                 seller.setIsApproved(false);
-                emailService.sendSellerDeactivationEmailByAdmin(user);
+                emailService.sendSellerDeactivationEmailByAdmin(user, LocaleContextHolder.getLocale());
                 return new MessageResponse("Seller deactivated successfully");
             default:
                 throw new InvalidRequestException("Invalid status");
@@ -204,40 +205,45 @@ public class AdminService {
 
     // addCategory Method
     @Transactional
-    public String addCategory(AddCategoryRequest request){
+    public UUID addCategory(AddCategoryRequest request) {
         String name = request.getName().trim();
-
         Category parent = null;
+        if (request.getParentId() != null) {
 
-        if(request.getParentId()!=null){
             parent = categoryRepository.findByIdAndIsDeletedFalse(request.getParentId())
                     .orElseThrow(() -> new InvalidRequestException("Parent category not found"));
 
-            categoryRepository.findByNameIgnoreCaseAndParentCategoryIdAndIsDeletedFalse(name,parent.getId()).ifPresent(c -> {
-                throw new InvalidRequestException("Category already exists under this parent");
-            });
+            categoryRepository
+                    .findByNameIgnoreCaseAndParentCategoryIdAndIsDeletedFalse(name, parent.getId())
+                    .ifPresent(c -> {
+                        throw new InvalidRequestException("Category already exists under this parent");
+                    });
 
             Category temp = parent;
-
-            while(temp!=null){
-                if(temp.getName().equalsIgnoreCase(name)){
+            while (temp != null) {
+                if (temp.getName().equalsIgnoreCase(name)) {
                     throw new InvalidRequestException("Category already exists in hierarchy");
                 }
                 temp = temp.getParentCategory();
             }
 
-            if(productRepository.existsByCategoryAndIsDeletedFalse(parent)){
+            if (existsInSubtree(parent, name)) {
+                throw new InvalidRequestException("Category already exists in subtree");
+            }
+
+            if (productRepository.existsByCategoryAndIsDeletedFalse(parent)) {
                 throw new InvalidRequestException(
                         "Cannot add subcategory because parent category has products");
             }
 
         }
-        else{
+        else {
             categoryRepository.findByNameIgnoreCaseAndParentCategoryIsNullAndIsDeletedFalse(name)
                     .ifPresent(c -> {
                         throw new InvalidRequestException("Root category already exists");
                     });
         }
+
         Category category = Category.builder()
                 .name(name)
                 .parentCategory(parent)
@@ -245,9 +251,28 @@ public class AdminService {
                 .build();
 
         categoryRepository.save(category);
-        return "Category created successfully with ID: "+category.getId();
+        return category.getId();
     }
+    private boolean existsInSubtree(Category parent, String name) {
 
+        if (parent.getChildren() == null || parent.getChildren().isEmpty()) {
+            return false;
+        }
+
+        for (Category child : parent.getChildren()) {
+
+            if (!child.getIsDeleted() &&
+                    child.getName().equalsIgnoreCase(name)) {
+                return true;
+            }
+
+            if (existsInSubtree(child, name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     // get All Category
     public List<CategoryResponse> getAllCategories(int max,int offset,String sort,String order,String query,UUID categoryId){
@@ -597,7 +622,7 @@ public class AdminService {
 
                 product.setIsActive(true);
 
-                emailService.sendProductActivationEmail(product);
+                emailService.sendProductActivationEmail(product, LocaleContextHolder.getLocale());
 
                 return "Product activated successfully";
             }
@@ -610,7 +635,7 @@ public class AdminService {
 
                 product.setIsActive(false);
 
-                emailService.sendProductDeactivationEmail(product);
+                emailService.sendProductDeactivationEmail(product, LocaleContextHolder.getLocale());
 
                 return "Product deactivated successfully";
             }

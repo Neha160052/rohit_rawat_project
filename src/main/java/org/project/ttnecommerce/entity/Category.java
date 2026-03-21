@@ -4,8 +4,14 @@ import lombok.*;
 import org.project.ttnecommerce.entity.base.Auditable;
 
 import java.util.*;
+
 @Entity
-@Table(name = "category")
+@Table(
+        name = "category",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {"name", "parent_category_id"}
+        )
+)
 @Getter
 @Setter
 @Builder
@@ -24,12 +30,11 @@ public class Category extends Auditable {
     @JoinColumn(name = "parent_category_id")
     private Category parentCategory;
 
-    @OneToMany(mappedBy = "parentCategory")
+    @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Category> children = new ArrayList<>();
 
     @OneToMany(mappedBy = "category")
     private List<CategoryMetadataFieldValues> categoryMetadataFieldValues = new ArrayList<>();
 
     private Boolean isDeleted = false;
-
 }

@@ -8,6 +8,7 @@ import org.project.ttnecommerce.exception.AccessDeniedException;
 import org.project.ttnecommerce.repository.*;
 import org.project.ttnecommerce.security.CustomUserDetails;
 import org.project.ttnecommerce.specification.SellerProductSpecification;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -240,7 +241,7 @@ public class SellerService {
         }
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
-        emailService.sendPasswordChangeEmail(user);
+        emailService.sendPasswordChangeEmail(user, LocaleContextHolder.getLocale());
     }
 
 

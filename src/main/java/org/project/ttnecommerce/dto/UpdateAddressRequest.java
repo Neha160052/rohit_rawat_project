@@ -12,37 +12,37 @@ public class UpdateAddressRequest {
 
     @Pattern(
             regexp = "^[A-Za-z0-9 ,./#-]*$",
-            message = "Address contains invalid characters"
+            message = "{validation.address.invalid}"
     )
     private String addressLine;
 
     @Pattern(
             regexp = "^(?!\\s*$)[A-Za-z]+(?: [A-Za-z]+)*$",
-            message = "City must contain only alphabets and single spaces"
+            message = "{validation.city.alpha.single_space.short}"
     )
     private String city;
 
     @Pattern(
             regexp = "^(?!\\s*$)[A-Za-z]+(?: [A-Za-z]+)*$",
-            message = "State must contain only alphabets and single spaces"
+            message = "{validation.state.alpha.single_space.short}"
     )
     private String state;
 
     @Pattern(
             regexp = "^(?!\\s*$)[A-Za-z]+(?: [A-Za-z]+)*$",
-            message = "Country must contain only alphabets and single spaces"
+            message = "{validation.country.alpha.single_space.short}"
     )
     private String country;
 
     @Pattern(
             regexp = "^(?!\\s*$)[1-9][0-9]{5}$",
-            message = "Zip code must be 6 digits and cannot start with 0"
+            message = "{validation.zip.invalid}"
     )
     private String zipCode;
 
     @Pattern(
             regexp = "^(?!\\s*$)[A-Za-z ]{2,50}$",
-            message = "Label must contain only alphabets and be between 2 and 50 characters"
+            message = "{validation.label.alpha.range}"
     )
     private String label;
 }

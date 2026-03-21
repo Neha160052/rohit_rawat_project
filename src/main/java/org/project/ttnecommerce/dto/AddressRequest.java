@@ -9,33 +9,33 @@ import lombok.*;
 @Builder
 public class AddressRequest {
 
-    @NotBlank(message = "City cannot be blank")
-    @Size(min = 2, max = 50, message = "City must be between 2 and 50 characters")
-    @Pattern(regexp = "^[A-Za-z]+(?:[ ][A-Za-z]+)*$", message = "City must contain only alphabets and single spaces between words")
+    @NotBlank(message = "{validation.city.blank}")
+    @Size(min = 2, max = 50, message = "{validation.city.size}")
+    @Pattern(regexp = "^[A-Za-z]+(?:[ ][A-Za-z]+)*$", message = "{validation.city.alpha.single_space}")
     private String city;
 
-    @NotBlank(message = "State cannot be blank")
-    @Size(min = 2, max = 50, message = "State must be between 2 and 50 characters")
-    @Pattern(regexp = "^[A-Za-z]+(?:[ ][A-Za-z]+)*$", message = "State must contain only alphabets and single spaces between words")
+    @NotBlank(message = "{validation.state.blank}")
+    @Size(min = 2, max = 50, message = "{validation.state.size}")
+    @Pattern(regexp = "^[A-Za-z]+(?:[ ][A-Za-z]+)*$", message = "{validation.state.alpha.single_space}")
     private String state;
 
-    @NotBlank(message = "Country cannot be blank")
-    @Size(min = 2, max = 50, message = "Country must be between 2 and 50 characters")
-    @Pattern(regexp = "^[A-Za-z]+(?:[ ][A-Za-z]+)*$", message = "Country must contain only alphabets and single spaces between words")
+    @NotBlank(message = "{validation.country.blank}")
+    @Size(min = 2, max = 50, message = "{validation.country.size}")
+    @Pattern(regexp = "^[A-Za-z]+(?:[ ][A-Za-z]+)*$", message = "{validation.country.alpha.single_space}")
     private String country;
 
-    @NotBlank(message = "Address line cannot be blank")
-    @Size(min = 2, max = 255, message = "Address must be between 5 and 255 characters")
+    @NotBlank(message = "{validation.address.blank}")
+    @Size(min = 2, max = 255, message = "{validation.address.size}")
     @Pattern(
             regexp = "^[A-Za-z0-9 ,./#-]+$",
-            message = "Address contains invalid characters"
+            message = "{validation.address.invalid}"
     )
     private String addressLine;
 
-    @NotBlank(message = "Zip code cannot be blank")
+    @NotBlank(message = "{validation.zip.blank}")
     @Pattern(
             regexp = "^[1-9][0-9]{5}$",
-            message = "Zip code must be 6 digits and cannot start with 0"
+            message = "{validation.zip.invalid}"
     )
     private String zipCode;
 }
