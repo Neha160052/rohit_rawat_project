@@ -30,9 +30,6 @@ public class PasswordResetService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
-    // =========================
-    // FORGOT PASSWORD
-    // =========================
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
 
@@ -44,8 +41,6 @@ public class PasswordResetService {
         if (!user.getIsActive()) {
             throw new AccountNotActivatedException("Account not activated");
         }
-
-        // delete old tokens
         activationTokenRepository.deleteByUser(user);
 
         String token = UUID.randomUUID().toString();
@@ -66,12 +61,8 @@ public class PasswordResetService {
         );
     }
 
-    // =========================
-    // RESET PASSWORD
-    // =========================
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
-
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new PasswordMismatchException("Passwords do not match");
         }
@@ -82,7 +73,6 @@ public class PasswordResetService {
                 .findByToken(tokenValue)
                 .orElseThrow(() -> new InvalidToken("Token not found"));
 
-        // check expiry
         if (activationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
             activationTokenRepository.delete(activationToken);
             throw new InvalidToken("Token expired");
@@ -98,16 +88,13 @@ public class PasswordResetService {
             throw new AccountNotActivatedException("Account not activated");
         }
 
-        // prevent same password reuse
         if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("New password cannot be same as old password");
         }
 
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
-
         activationTokenRepository.delete(activationToken);
-
         log.info("Password successfully reset for user: {}", user.getEmail());
     }
 }

@@ -90,16 +90,10 @@ public class AdminController {
     }
 
     @PostMapping("/add-category")
-    public ResponseEntity<CategoryCreateResponse> addCategory(
-            @Valid @RequestBody AddCategoryRequest request) {
-
-        log.info("Admin API called: Add category | name={} parentId={}",
-                request.getName(), request.getParentId());
-
+    public ResponseEntity<CategoryCreateResponse> addCategory(@Valid @RequestBody AddCategoryRequest request) {
+        log.info("Admin API called: Add category | name={} parentId={}", request.getName(), request.getParentId());
         UUID id = adminService.addCategory(request);
-
-        return ResponseEntity.ok(
-                new CategoryCreateResponse("Category created successfully", id)
+        return ResponseEntity.ok(new CategoryCreateResponse("Category created successfully", id)
         );
     }
 
@@ -156,5 +150,12 @@ public class AdminController {
     @PutMapping("/product-status")
     public ResponseEntity<String> updateProductStatus(@Valid @RequestBody ProductStatusUpdateRequest request) {
         return ResponseEntity.ok(translator.translate(adminService.updateProductStatus(request)));
+    }
+
+    @PutMapping("/unlock")
+    public ResponseEntity<String> unlockUser(@RequestParam String email){
+        log.info("Admin unlocking user: {}", email);
+        adminService.unlockUser(email);
+        return ResponseEntity.ok("User unlocked successfully");
     }
 }

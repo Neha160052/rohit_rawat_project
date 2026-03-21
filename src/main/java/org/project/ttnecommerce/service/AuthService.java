@@ -17,11 +17,7 @@ import org.project.ttnecommerce.security.CustomUserDetails;
 import org.project.ttnecommerce.security.Utils.JwtUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -29,63 +25,73 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
+    private final LoginAttemptService loginAttemptService;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public LoginResponse login(LoginRequest request, HttpServletResponse response) {
+
         log.info("Login attempt for email: {}", request.getEmail());
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
         if (user.getIsLocked()) {
+            log.error("LOGIN BLOCKED - ACCOUNT LOCKED: {}", user.getEmail());
             throw new AccountLockedException("Account locked");
         }
 
-        Authentication authentication;
-
-        try {
-            authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
-            );
-        }
-        catch (DisabledException ex) {
+        if (!user.getIsActive()) {
             throw new AccountNotActivatedException("Account is not activated");
         }
-        catch (BadCredentialsException ex) {
+
+        boolean isPasswordCorrect = passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword()
+        );
+
+        if (!isPasswordCorrect) {
+
+            loginAttemptService.loginFailed(user);
+
+            log.error("FAILED LOGIN: {}", user.getEmail());
+
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-
+        log.info("LOGIN SUCCESS: {}", user.getEmail());
+        loginAttemptService.loginSucceeded(user);
         user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
 
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        CustomUserDetails userDetails = new CustomUserDetails(user);
 
         String accessToken = jwtUtils.generateToken(userDetails);
 
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken.getToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(false) // change to true in production
                 .path("/")
                 .maxAge(24 * 60 * 60)
                 .sameSite("Strict")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        log.info("User logged in successfully: {}", user.getEmail());
+
         return new LoginResponse(accessToken);
     }
 
     @Transactional
     public void logout(String refreshToken, String accessToken) {
+
         log.info("Logout request received");
+
         if (refreshToken != null) {
             refreshTokenRepository.findByToken(refreshToken)
                     .ifPresent(refreshTokenRepository::delete);
@@ -94,17 +100,20 @@ public class AuthService {
         if (accessToken != null && !accessToken.isBlank()) {
             try {
                 String email = jwtUtils.extractUsername(accessToken);
-                User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found"));
+
+                User user = userRepository.findByEmail(email)
+                        .orElseThrow(() -> new UserNotFoundException("User not found"));
 
                 user.setTokenVersion(user.getTokenVersion() + 1);
                 userRepository.save(user);
-                log.info("Access tokens invalidated for user: {}", email);
 
-            }
-            catch (Exception e) {
+                log.info("Tokens invalidated for user: {}", email);
+
+            } catch (Exception e) {
                 log.warn("Invalid token during logout");
             }
         }
-        log.info("User logged out successfully");
+
+        log.info("Logout completed");
     }
 }

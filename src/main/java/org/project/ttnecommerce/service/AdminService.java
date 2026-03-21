@@ -7,6 +7,7 @@ import org.project.ttnecommerce.entity.*;
 import org.project.ttnecommerce.exception.InvalidInputException;
 import org.project.ttnecommerce.exception.InvalidRequestException;
 import org.project.ttnecommerce.exception.ResourceNotFoundException;
+import org.project.ttnecommerce.exception.UserNotFoundException;
 import org.project.ttnecommerce.repository.*;
 import org.project.ttnecommerce.specification.AdminProductSpecification;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -260,17 +261,14 @@ public class AdminService {
         }
 
         for (Category child : parent.getChildren()) {
-
             if (!child.getIsDeleted() &&
                     child.getName().equalsIgnoreCase(name)) {
                 return true;
             }
-
             if (existsInSubtree(child, name)) {
                 return true;
             }
         }
-
         return false;
     }
 
@@ -703,6 +701,25 @@ public class AdminService {
                 seller.getCompanyName(),
                 companyAddress,
                 seller.getCompanyContact()
+        );
+    }
+
+    //unlock the user
+    public void unlockUser(String email){
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if(!user.getIsLocked()){
+            throw new RuntimeException("User is already unlocked");
+        }
+
+        user.setIsLocked(false);
+        user.setInvalidAttemptCount(0);
+
+        userRepository.save(user);
+        emailService.sendAccountUnlockedEmail(
+                user,
+                LocaleContextHolder.getLocale()
         );
     }
 }

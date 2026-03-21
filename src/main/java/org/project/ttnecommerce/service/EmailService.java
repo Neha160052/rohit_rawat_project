@@ -158,5 +158,13 @@ public class EmailService {
         return translator.getOrDefault(locale, code, code, args);
     }
 
+    @Async
+    public void sendAccountUnlockedEmail(User user, Locale locale) {
+        sendEmail(
+                user.getEmail(),
+                translate(locale, "email.account.unlocked.subject"),
+                translate(locale, "email.account.unlocked.body", user.getFirstName())
+        );
+    }
 
 }

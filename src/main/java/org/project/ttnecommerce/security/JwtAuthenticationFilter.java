@@ -1,4 +1,5 @@
 package org.project.ttnecommerce.security;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,6 +47,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             CustomUserDetails userDetails =
                     (CustomUserDetails) userDetailsService.loadUserByUsername(username);
 
+            if (userDetails.getUser().getIsLocked()) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             if (jwtUtils.isTokenValid(token, userDetails)) {
 
                 Integer tokenVersion = jwtUtils.extractTokenVersion(token);
@@ -56,13 +62,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
                                 userDetails.getAuthorities()
                         );
 
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
@@ -74,6 +83,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
+
         return path.startsWith("/auth/login") ||
                 path.startsWith("/auth/logout") ||
                 path.startsWith("/auth/refresh") ||
