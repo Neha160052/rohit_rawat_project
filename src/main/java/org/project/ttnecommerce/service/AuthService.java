@@ -55,9 +55,7 @@ public class AuthService {
         );
 
         if (!isPasswordCorrect) {
-
             loginAttemptService.loginFailed(user);
-
             log.error("FAILED LOGIN: {}", user.getEmail());
 
             throw new InvalidCredentialsException("Invalid email or password");
@@ -76,7 +74,7 @@ public class AuthService {
 
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken.getToken())
                 .httpOnly(true)
-                .secure(false) // change to true in production
+                .secure(false)
                 .path("/")
                 .maxAge(24 * 60 * 60)
                 .sameSite("Strict")

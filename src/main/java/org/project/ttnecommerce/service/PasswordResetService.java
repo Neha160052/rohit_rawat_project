@@ -48,7 +48,7 @@ public class PasswordResetService {
         ActivationToken activationToken = new ActivationToken();
         activationToken.setToken(token);
         activationToken.setUser(user);
-        activationToken.setExpiryDate(LocalDateTime.now().plusMinutes(15));
+        activationToken.setExpiryDate(LocalDateTime.now().plusMinutes(2));
 
         activationTokenRepository.save(activationToken);
 

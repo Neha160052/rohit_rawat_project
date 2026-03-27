@@ -78,14 +78,14 @@ public class CustomerController {
         return ResponseEntity.ok(new ApiResponse(translator.get("response.password.updated")));
     }
 
-    @DeleteMapping("/address/{addressId}")
+    @DeleteMapping("/delete-address/{addressId}")
     public ResponseEntity<ApiResponse> deleteAddress(@PathVariable UUID addressId) {
         log.info("Customer API called: Delete address | addressId={}", addressId);
         customerService.deleteAddress(addressId);
         return ResponseEntity.ok(new ApiResponse(translator.get("response.address.deleted")));
     }
 
-    @PatchMapping("/address/{addressId}")
+    @PatchMapping("/update-address/{addressId}")
     public ResponseEntity<ApiResponse> updateAddress(@PathVariable UUID addressId, @Valid @RequestBody UpdateAddressRequest request) {
         log.info("Customer API called: Update address | addressId={}", addressId);
         customerService.updateAddress(addressId, request);

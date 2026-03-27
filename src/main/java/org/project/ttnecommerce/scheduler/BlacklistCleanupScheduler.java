@@ -14,7 +14,7 @@ public class BlacklistCleanupScheduler {
 
     private final BlacklistedTokenRepository blacklistedTokenRepository;
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "* * * * * *")
     public void cleanBlacklist() {
         log.info("Running blacklist cleanup job...");
         blacklistedTokenRepository.deleteByExpiryDateBefore(LocalDateTime.now());
