@@ -1,0 +1,34 @@
+services:
+  mysql:
+    image: mysql
+    container_name: mysqlDB
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: sample
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot123"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+  app:
+    build: .
+    container_name: springboot-app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sample
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123
+
+volumes:
+  mysql:
+    name: ttn_mysql_data
